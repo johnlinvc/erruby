@@ -1,0 +1,4 @@
+import erlang otp
+parse int & + & Array
+translate the ast to erlang
+use otp to run the code
