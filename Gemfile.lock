@@ -1,3 +1,11 @@
+GIT
+  remote: git://github.com/johnlinvc/erlport-ast_mapping.git
+  revision: 15cac23aebdaa4ec686937db045332aa0fe0560e
+  specs:
+    erlport-ast_mapping (0.1.0)
+      ast
+      parser
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -9,4 +17,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  erlport-ast_mapping!
   parser
+
+BUNDLED WITH
+   1.10.6

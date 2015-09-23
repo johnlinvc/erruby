@@ -1,10 +1,17 @@
 #!/usr/bin/env ruby
 
-require 'parser/current'
+require 'rubygems'
+require 'bundler/setup'
+require 'erlport/ast_mapping'
 
-src  = ARGF.read
+def parse(src)
+  ErlPort::AstMapping.parse(src)
+end
 
-ast = Parser::CurrentRuby.parse(src)
+def install_encoder
+  ErlPort::AstMapping.install_encoder
+end
 
-p ast
-
+if __FILE__ == $0
+  p parse("[1,2,3]".each_char.map(&:ord))
+end
