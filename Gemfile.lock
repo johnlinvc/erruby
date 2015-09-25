@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/johnlinvc/erlport-ast_mapping.git
-  revision: 15cac23aebdaa4ec686937db045332aa0fe0560e
+  revision: e284c1730c0174b67bc68340df6b3d66cc09ac67
   specs:
     erlport-ast_mapping (0.1.0)
       ast
