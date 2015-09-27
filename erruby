@@ -1,2 +1,2 @@
 #!/bin/bash
-escript erruby.erl $*
+escript ebin/erruby.beam $*

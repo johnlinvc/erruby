@@ -1,13 +1,13 @@
 -module(erruby).
--export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2]).
+-export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2, main/1]).
 
 main([SrcFileName]) ->
   try
     io:format("input file name ~s\n", [SrcFileName]),
     eruby(SrcFileName)
   catch
-    _:_ ->
-      io:format("error\n", []),
+    _:E ->
+      io:format("error ~p ~n", [E]),
       erlang:display(erlang:get_stacktrace())
   end;
 
@@ -26,13 +26,13 @@ eval_ast(Ast) ->
   print_ast(Ast).
 
 install_encoder(Ruby) ->
-  ruby:call(Ruby, './erruby.rb', 'install_encoder',[]).
+  ruby:call(Ruby, './rb_src/erruby.rb', 'install_encoder',[]).
 
 print_ast(Ast) ->
   io:format("~p ~n",[Ast]).
 
 parse_ast(Ruby, String) ->
-  ruby:call(Ruby, './erruby.rb','parse', [String]).
+  ruby:call(Ruby, './rb_src/erruby.rb','parse', [String]).
 
 add_lib_path() ->
   code:add_path("./erlport/ebin").
