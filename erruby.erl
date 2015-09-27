@@ -15,13 +15,15 @@ main(_) ->
   usage().
 
 eruby(SrcFileName) ->
-  Filename = "class_def.rb",
-  {ok, Binary} = file:read_file(Filename),
+  {ok, Binary} = file:read_file(SrcFileName),
   FileLines = binary:bin_to_list(Binary),
   Ruby = start_ruby(),
   Ast = parse_ast(Ruby, FileLines),
-  print_ast(Ast),
-  stop_ruby(Ruby).
+  stop_ruby(Ruby),
+  eval_ast(Ast).
+
+eval_ast(Ast) ->
+  print_ast(Ast).
 
 install_encoder(Ruby) ->
   ruby:call(Ruby, './erruby.rb', 'install_encoder',[]).
