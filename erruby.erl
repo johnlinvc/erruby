@@ -16,12 +16,18 @@ main(_) ->
 
 eruby(SrcFileName) ->
   Filename = "class_def.rb",
+  {ok, Binary} = file:read_file(Filename),
+  FileLines = binary:bin_to_list(Binary),
   Ruby = start_ruby(),
-  Ast = parse_ast(Ruby, "1+1"),
+  Ast = parse_ast(Ruby, FileLines),
+  print_ast(Ast),
   stop_ruby(Ruby).
 
 install_encoder(Ruby) ->
   ruby:call(Ruby, './erruby.rb', 'install_encoder',[]).
+
+print_ast(Ast) ->
+  io:format("~p ~n",[Ast]).
 
 parse_ast(Ruby, String) ->
   ruby:call(Ruby, './erruby.rb','parse', [String]).
