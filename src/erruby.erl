@@ -36,7 +36,7 @@ parse_ast(Ruby, String) ->
   ruby:call(Ruby, './rb_src/erruby.rb','parse', [String]).
 
 add_lib_path() ->
-  code:add_path("./erlport/ebin"),
+  code:add_path("./deps/erlport/ebin"),
   code:add_path("./ebin").
 
 stop_ruby(Ruby) ->
