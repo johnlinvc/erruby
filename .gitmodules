@@ -1,3 +1,0 @@
-[submodule "erlport"]
-	path = erlport
-	url = https://github.com/hdima/erlport.git
