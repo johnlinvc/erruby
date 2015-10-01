@@ -1,0 +1,4 @@
+#!/bin/bash
+pushd ./deps/erlport > /dev/null
+make > /dev/null
+popd > /dev/null
