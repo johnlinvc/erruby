@@ -23,7 +23,8 @@ eruby(SrcFileName) ->
   eval_ast(Ast).
 
 eval_ast(Ast) ->
-  print_ast(Ast).
+  print_ast(Ast),
+  erruby_class:class_def(Ast).
 
 install_encoder(Ruby) ->
   ruby:call(Ruby, './rb_src/erruby.rb', 'install_encoder',[]).
@@ -35,7 +36,8 @@ parse_ast(Ruby, String) ->
   ruby:call(Ruby, './rb_src/erruby.rb','parse', [String]).
 
 add_lib_path() ->
-  code:add_path("./erlport/ebin").
+  code:add_path("./erlport/ebin"),
+  code:add_path("./ebin").
 
 stop_ruby(Ruby) ->
   ruby:stop(Ruby).
