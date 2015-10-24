@@ -1,0 +1,46 @@
+-module(erruby_debug).
+-export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
+-export([start_link/1, debug/3, debug_tmp/2, set_debug_level/1]).
+
+init([DebugLevel]) ->
+  {ok, #{debug_level => DebugLevel}}.
+
+terminate(_Arg, _State) -> {ok, dead}.
+
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
+
+debug(Format, Args, Level) ->
+  gen_server:cast(erruby_debug_pid, #{level => Level, format => Format, args => Args}).
+
+debug_tmp(Format, Args) ->
+  io:format(Format, Args).
+
+set_debug_level(Level) ->
+  gen_server:cast(erruby_debug_pid, #{new_level => Level}).
+
+start_link(DebugLevel) -> gen_server:start_link({local, erruby_debug_pid} ,?MODULE, [DebugLevel], []).
+
+handle_info(Info, State) ->
+  io:format("Got unkwon info:~n~p~n", [Info]),
+  {ok, State}.
+
+
+handle_call(_Req, _From, State) ->
+  io:format("handle unknow call ~p ~p ~p ~n",[_Req, _From, State]),
+  NewState = State,
+  {reply, done, NewState}.
+
+handle_cast(#{new_level := NewLevel}, State) ->
+  {noreply, State#{ debug_level => NewLevel } };
+
+handle_cast(#{level := Level, format := Format, args := Args}, #{debug_level := DebugLevel} = State) when DebugLevel >= Level ->
+  io:format(Format, Args),
+  {noreply, State};
+
+handle_cast(_Req, #{debug_level := _DebugLevel} = State) ->
+  {noreply, State};
+
+handle_cast(_Req, State) ->
+  io:format("handle unknown cast ~p ~p ~n",[_Req, State]),
+  NewState = State,
+  {noreply, NewState}.

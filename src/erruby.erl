@@ -20,6 +20,7 @@ eruby(SrcFileName) ->
   Ruby = start_ruby(),
   Ast = parse_ast(Ruby, FileLines),
   stop_ruby(Ruby),
+  erruby_debug:start_link(0),
   erruby_vm:eval_ast(Ast).
 
 
