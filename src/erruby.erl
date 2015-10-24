@@ -20,17 +20,12 @@ eruby(SrcFileName) ->
   Ruby = start_ruby(),
   Ast = parse_ast(Ruby, FileLines),
   stop_ruby(Ruby),
-  eval_ast(Ast).
+  erruby_vm:eval_ast(Ast).
 
-eval_ast(Ast) ->
-  print_ast(Ast),
-  erruby_class:class_def(Ast).
 
 install_encoder(Ruby) ->
   ruby:call(Ruby, './rb_src/erruby.rb', 'install_encoder',[]).
 
-print_ast(Ast) ->
-  io:format("~p ~n",[Ast]).
 
 parse_ast(Ruby, String) ->
   ruby:call(Ruby, './rb_src/erruby.rb','parse', [String]).
