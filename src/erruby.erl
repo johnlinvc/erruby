@@ -1,9 +1,18 @@
 -module(erruby).
 -export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2, main/1]).
 
-main([SrcFileName]) ->
+main(Args) ->
+  add_lib_path(),
+  {ok, Opts} = getopt(Args),
+  {
+   [{debug,DebugLevel}],
+   [SrcFileName | RubyArgs]
+  } = Opts,
+  erruby_debug:start_link(DebugLevel),
+  erruby_debug:debug_tmp("~p ~n", [Opts]),
   try
-    io:format("input file name ~s\n", [SrcFileName]),
+    erruby_debug:debug_1("input file name ~s\n", [SrcFileName]),
+    erruby_debug:debug_1("input args ~s\n", [RubyArgs]),
     eruby(SrcFileName)
   catch
     _:E ->
@@ -20,8 +29,15 @@ eruby(SrcFileName) ->
   Ruby = start_ruby(),
   Ast = parse_ast(Ruby, FileLines),
   stop_ruby(Ruby),
-  erruby_debug:start_link(0),
   erruby_vm:eval_ast(Ast).
+
+opt_spec_list() ->
+  [
+   {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"}
+  ].
+
+getopt(Args) ->
+  getopt:parse(opt_spec_list(), Args).
 
 
 install_encoder(Ruby) ->
@@ -33,13 +49,13 @@ parse_ast(Ruby, String) ->
 
 add_lib_path() ->
   code:add_path("./deps/erlport/ebin"),
+  code:add_path("./deps/getopt/ebin"),
   code:add_path("./ebin").
 
 stop_ruby(Ruby) ->
   ruby:stop(Ruby).
 
 start_ruby() ->
-  add_lib_path(),
   {ok, Ruby} = ruby:start(),
   install_encoder(Ruby),
   Ruby.

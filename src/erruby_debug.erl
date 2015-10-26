@@ -1,6 +1,6 @@
 -module(erruby_debug).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([start_link/1, debug/3, debug_tmp/2, set_debug_level/1]).
+-export([start_link/1, debug/3, debug_1/2, debug_tmp/2, set_debug_level/1]).
 
 init([DebugLevel]) ->
   {ok, #{debug_level => DebugLevel}}.
@@ -10,7 +10,11 @@ terminate(_Arg, _State) -> {ok, dead}.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
 debug(Format, Args, Level) ->
-  gen_server:cast(erruby_debug_pid, #{level => Level, format => Format, args => Args}).
+  FullFormat = lists:concat(["debug level ", Level, ": ", Format]),
+  gen_server:cast(erruby_debug_pid, #{level => Level, format => FullFormat, args => Args}).
+
+debug_1(Format, Args) ->
+  debug(Format, Args, 1).
 
 debug_tmp(Format, Args) ->
   io:format(Format, Args).
