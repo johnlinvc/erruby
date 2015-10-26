@@ -1,6 +1,6 @@
 -module(erruby_debug).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([start_link/1, debug/3, debug_1/2, debug_tmp/2, set_debug_level/1]).
+-export([start_link/1, debug/3, debug_1/2,debug_2/2, debug_tmp/2, set_debug_level/1]).
 
 init([DebugLevel]) ->
   {ok, #{debug_level => DebugLevel}}.
@@ -15,6 +15,9 @@ debug(Format, Args, Level) ->
 
 debug_1(Format, Args) ->
   debug(Format, Args, 1).
+
+debug_2(Format, Args) ->
+  debug(Format, Args, 2).
 
 debug_tmp(Format, Args) ->
   io:format(Format, Args).

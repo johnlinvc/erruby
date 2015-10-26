@@ -21,8 +21,8 @@ main(Args) ->
   lists:foreach(fun handle_opts/1, Opts),
   [SrcFileName | RubyArgs] = Extra,
   try
-    erruby_debug:debug_1("input file name ~s\n", [SrcFileName]),
-    erruby_debug:debug_1("input args ~s\n", [RubyArgs]),
+    erruby_debug:debug_2("input file name ~s\n", [SrcFileName]),
+    erruby_debug:debug_2("input args ~s\n", [RubyArgs]),
     eruby(SrcFileName)
   catch
     _:E ->
@@ -66,8 +66,4 @@ start_ruby() ->
   {ok, Ruby} = ruby:start(),
   install_encoder(Ruby),
   Ruby.
-
-usage() ->
-  io:format("usage: erruby filename\n"),
-  halt(1).
 
