@@ -1,15 +1,25 @@
 -module(erruby).
 -export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2, main/1]).
 
+opt_spec_list() ->
+  [
+   {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"},
+   {help, $h, "help", undefined, "Show this help"}
+  ].
+
+handle_opts({debug, DebugLevel}) ->
+  erruby_debug:set_debug_level(DebugLevel);
+handle_opts(help ) ->
+  show_help();
+handle_opts(_Opts) ->
+  ok.
+
 main(Args) ->
   add_lib_path(),
-  {ok, Opts} = getopt(Args),
-  {
-   [{debug,DebugLevel}],
-   [SrcFileName | RubyArgs]
-  } = Opts,
-  erruby_debug:start_link(DebugLevel),
-  erruby_debug:debug_tmp("~p ~n", [Opts]),
+  erruby_debug:start_link(0),
+  {ok, {Opts, Extra}} = getopt(Args),
+  lists:foreach(fun handle_opts/1, Opts),
+  [SrcFileName | RubyArgs] = Extra,
   try
     erruby_debug:debug_1("input file name ~s\n", [SrcFileName]),
     erruby_debug:debug_1("input args ~s\n", [RubyArgs]),
@@ -18,10 +28,7 @@ main(Args) ->
     _:E ->
       io:format("error ~p ~n", [E]),
       erlang:display(erlang:get_stacktrace())
-  end;
-
-main(_) ->
-  usage().
+  end.
 
 eruby(SrcFileName) ->
   {ok, Binary} = file:read_file(SrcFileName),
@@ -31,13 +38,13 @@ eruby(SrcFileName) ->
   stop_ruby(Ruby),
   erruby_vm:eval_ast(Ast).
 
-opt_spec_list() ->
-  [
-   {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"}
-  ].
 
 getopt(Args) ->
   getopt:parse(opt_spec_list(), Args).
+
+show_help() ->
+  getopt:usage(opt_spec_list(), "erruby", "[programfile] [arguments]"),
+  halt(1).
 
 
 install_encoder(Ruby) ->
