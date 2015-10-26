@@ -62,6 +62,3 @@ DEPENDENCIES
   guard
   guard-rebar!
   parser
-
-BUNDLED WITH
-   1.10.6
