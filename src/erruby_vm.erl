@@ -14,15 +14,15 @@ eval_ast({ast,type,'begin',children, Children}, Env) ->
 eval_ast({ast,type,send, children, Children}, Env) ->
   [_F | [Msg | Args]] = Children,
   EvaledArgs = [ eval_ast(Child, Env) || Child <- Args],
-  #{ klass := Self } = Env,
+  #{ self := Self } = Env,
   erruby_object:msg_send(Self, Msg, EvaledArgs);
 
-eval_ast({ast, type, lvasgn, children, Children}, #{ klass := Self } = Env) ->
+eval_ast({ast, type, lvasgn, children, Children}, #{ self := Self } = Env) ->
   [Name, ValAst] = Children,
   Val = eval_ast(ValAst, Env),
   erruby_object:lvasgn(Self, Name, Val);
 
-eval_ast({ast, type, lvar, children, [Name]}, #{ klass := Self} = _Env) ->
+eval_ast({ast, type, lvar, children, [Name]}, #{ self := Self} = _Env) ->
   {ok, Val} = erruby_object:lvar(Self, Name),
   Val;
 
@@ -41,4 +41,4 @@ eval_ast(Ast) ->
 
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),
-  #{klass => Kernal}.
+  #{self => Kernal}.
