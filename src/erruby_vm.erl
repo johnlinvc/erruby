@@ -12,10 +12,16 @@ eval_ast({ast,type,'begin',children, Children}, Env) ->
   [ eval_ast(Ast,Env) || Ast <- Children ];
 
 eval_ast({ast,type,send, children, Children}, Env) ->
-  [_F | [Msg | Args]] = Children,
+  erruby_debug:debug_1("send~n",[]),
+  [print_ast(Ast) || Ast <- Children],
+  [Receiver | [Msg | Args]] = Children,
   EvaledArgs = [ eval_ast(Child, Env) || Child <- Args],
   #{ self := Self } = Env,
-  erruby_object:msg_send(Self, Msg, EvaledArgs);
+  Target = case Receiver of
+    undefined -> Self;
+    _ -> Receiver
+  end,
+  erruby_object:msg_send(Target, Msg, EvaledArgs);
 
 eval_ast({ast, type, lvasgn, children, Children}, #{ self := Self } = Env) ->
   [Name, ValAst] = Children,
