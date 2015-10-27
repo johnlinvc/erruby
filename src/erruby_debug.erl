@@ -11,7 +11,7 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
 debug(Format, Args, Level) ->
   FullFormat = lists:concat(["debug level ", Level, ": ", Format]),
-  gen_server:cast(erruby_debug_pid, #{level => Level, format => FullFormat, args => Args}).
+  gen_server:call(erruby_debug_pid, #{level => Level, format => FullFormat, args => Args}).
 
 debug_1(Format, Args) ->
   debug(Format, Args, 1).
@@ -31,6 +31,9 @@ handle_info(Info, State) ->
   io:format("Got unkwon info:~n~p~n", [Info]),
   {ok, State}.
 
+handle_call(#{level := Level, format := Format, args := Args}, _From, #{debug_level := DebugLevel} = State) when DebugLevel >= Level ->
+  io:format(Format, Args),
+  {reply, ok, State};
 
 handle_call(_Req, _From, State) ->
   io:format("handle unknow call ~p ~p ~p ~n",[_Req, _From, State]),
@@ -39,13 +42,6 @@ handle_call(_Req, _From, State) ->
 
 handle_cast(#{new_level := NewLevel}, State) ->
   {noreply, State#{ debug_level => NewLevel } };
-
-handle_cast(#{level := Level, format := Format, args := Args}, #{debug_level := DebugLevel} = State) when DebugLevel >= Level ->
-  io:format(Format, Args),
-  {noreply, State};
-
-handle_cast(_Req, #{debug_level := _DebugLevel} = State) ->
-  {noreply, State};
 
 handle_cast(_Req, State) ->
   io:format("handle unknown cast ~p ~p ~n",[_Req, State]),
