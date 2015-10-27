@@ -2,13 +2,13 @@
 -export([eval_ast/1]).
 
 print_ast(Ast) ->
-  io:format("Ast: ~p ~n",[Ast]).
+  erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
 
 print_env(Env) ->
-  io:format("Env: ~p ~n",[Env]).
+  erruby_debug:debug_1("Env: ~p ~n",[Env]).
 
 eval_ast({ast,type,'begin',children, Children}, Env) ->
-  io:format("eval begin~n",[]),
+  erruby_debug:debug_2("eval begin~n",[]),
   [ eval_ast(Ast,Env) || Ast <- Children ];
 
 eval_ast({ast,type,send, children, Children}, Env) ->
