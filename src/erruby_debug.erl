@@ -35,6 +35,9 @@ handle_call(#{level := Level, format := Format, args := Args}, _From, #{debug_le
   io:format(Format, Args),
   {reply, ok, State};
 
+handle_call(#{level := Level}, _From, #{debug_level := DebugLevel} = State) when DebugLevel < Level ->
+  {reply, ok, State};
+
 handle_call(_Req, _From, State) ->
   io:format("handle unknow call ~p ~p ~p ~n",[_Req, _From, State]),
   NewState = State,
