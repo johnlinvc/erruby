@@ -1,7 +1,7 @@
 -module(erruby_object).
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([new_kernel/0, msg_send/3, lvasgn/3, lvar/2]).
+-export([new_kernel/0, msg_send/4, lvasgn/3, lvar/2, def_method/4, find_method/2]).
 
 init([]) ->
   Methods = #{puts => fun method_puts/1},
@@ -17,8 +17,8 @@ terminate(_Arg, _State) ->
 
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
-msg_send(Self, Msg, Args) ->
-  gen_server:call(Self, #{type => msg_send, msg => Msg, args => Args}).
+msg_send(Self, Msg, Args, Env) ->
+  gen_server:call(Self, #{type => msg_send, msg => Msg, args => Args, env => Env}).
 
 lvasgn(Self, Name, Val) ->
   gen_server:call(Self, #{type => lvasgn, name => Name, val => Val}).
@@ -26,12 +26,27 @@ lvasgn(Self, Name, Val) ->
 lvar(Self, Name) ->
   gen_server:call(Self, #{type => lvar, name => Name}).
 
+find_method(Self, Name) ->
+  gen_server:call(Self, #{type => find_method, name => Name}).
+
+%TODO: we need frame when running
+def_method(Self, Name, Args, Body) ->
+  gen_server:call(Self, #{type => def_method, name => Name, args => Args, body => Body}).
+
 new_kernel() ->
   start_link().
 
 handle_info(Info, State) ->
   io:format("Got unkwon info:~n~p~n", [Info]),
   {ok, State}.
+
+handle_call(#{ type := def_method }=Msg, _From, State) ->
+  io:format("Got def_method:~n~p~n", [Msg]),
+  {reply, done, State};
+
+handle_call(#{ type := find_method, name := Name }, _From, State) ->
+  #{methods := #{Name := Method}} = State,
+  {reply, Method, State};
 
 handle_call(#{ type := msg_send, msg := Msg, args:= Args}=_Req, _From, State) ->
   #{methods := #{Msg := Method}} = State,
