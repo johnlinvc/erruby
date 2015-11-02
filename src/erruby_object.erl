@@ -1,7 +1,7 @@
 -module(erruby_object).
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([new_kernel/0, msg_send/4, lvasgn/3, lvar/2, def_method/4, find_method/2]).
+-export([new_kernel/0, lvasgn/3, lvar/2, def_method/4, find_method/2]).
 
 init([]) ->
   Methods = #{puts => fun method_puts/1},
@@ -16,9 +16,6 @@ terminate(_Arg, _State) ->
   {ok, dead}.
 
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
-
-msg_send(Self, Msg, Args, Env) ->
-  gen_server:call(Self, #{type => msg_send, msg => Msg, args => Args, env => Env}).
 
 lvasgn(Self, Name, Val) ->
   gen_server:call(Self, #{type => lvasgn, name => Name, val => Val}).
@@ -47,12 +44,6 @@ handle_call(#{ type := def_method }=Msg, _From, State) ->
 handle_call(#{ type := find_method, name := Name }, _From, State) ->
   #{methods := #{Name := Method}} = State,
   {reply, Method, State};
-
-handle_call(#{ type := msg_send, msg := Msg, args:= Args}=_Req, _From, State) ->
-  #{methods := #{Msg := Method}} = State,
-  Method(Args),
-  NewState = State,
-  {reply, done, NewState};
 
 handle_call(#{ type := lvasgn, name := Name, val:= Val }=_Req, _From, #{ivars := IVars}=State) ->
   NewState = State#{ivars := IVars#{Name => Val}},
