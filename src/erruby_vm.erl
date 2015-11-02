@@ -25,6 +25,7 @@ eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
   Env#{ret_val => binary_to_list(SBin)};
 
+%TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
   [print_ast(Ast) || Ast <- Children],
@@ -47,18 +48,16 @@ eval_ast({ast, type, lvasgn, children, Children}, #{ lvars := LVars } = Env) ->
   #{ret_val := RetVal } = NewEnv,
   NewEnv#{ lvars := LVars#{ Name => RetVal }};
 
+%TODO also search for local vars
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   #{ lvars := #{Name := Val}} = Env,
   Env#{ ret_val => Val};
-
-%old methods
 
 eval_ast({ast, type, def, children, Children}, Env) ->
   [Name | [ {ast, type, args, children, Args} , Body ] ] = Children,
   #{ self := Self } = Env,
   erruby_object:def_method(Self, Name, Args, Body),
-  Self;
-
+  Env#{ret_val => Name};
 
 eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
