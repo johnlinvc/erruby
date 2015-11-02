@@ -18,7 +18,7 @@ eval_ast_rev(Env,Ast) ->
 
 eval_ast({ast,type,'begin',children, Children}, Env) ->
   erruby_debug:debug_2("eval begin~n",[]),
-  lists:foldl(fun eval_ast_rev/2, Env, Children);
+  Env#{ret_val => lists:foldl(fun eval_ast/2, Env, Children)};
 
 eval_ast({ast, type, self, children, []}, Env) ->
   #{ self := Self } = Env,
@@ -44,6 +44,16 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   LastEnv = lists:last(Envs),
   LastEnv#{ret_val => Result};
 
+eval_ast({ast, type, lvasgn, children, Children}, #{ lvars := LVars } = Env) ->
+  [Name, ValAst] = Children,
+  NewEnv = eval_ast(ValAst, Env),
+  #{ret_val := RetVal } = NewEnv,
+  NewEnv#{ lvars := LVars#{ Name => RetVal }};
+
+eval_ast({ast, type, lvar, children, [Name]}, Env) ->
+  #{ lvars := #{Name := Val}} = Env,
+  Env#{ ret_val => Val};
+
 %old methods
 
 eval_ast({ast, type, def, children, Children}, Env) ->
@@ -53,14 +63,7 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   Self;
 
 
-eval_ast({ast, type, lvasgn, children, Children}, #{ self := Self } = Env) ->
-  [Name, ValAst] = Children,
-  Val = eval_ast(ValAst, Env),
-  erruby_object:lvasgn(Self, Name, Val);
 
-eval_ast({ast, type, lvar, children, [Name]}, #{ self := Self} = _Env) ->
-  {ok, Val} = erruby_object:lvar(Self, Name),
-  Val;
 
 eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
