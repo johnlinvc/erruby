@@ -13,9 +13,6 @@ scanl(F, Acc0, [H | T]) ->
   Acc = apply(F, [H, Acc0]),
   [Acc0 | scanl(F, Acc, T)].
 
-eval_ast_rev(Env,Ast) ->
-  eval_ast(Ast,Env).
-
 eval_ast({ast,type,'begin',children, Children}, Env) ->
   erruby_debug:debug_2("eval begin~n",[]),
   Env#{ret_val => lists:foldl(fun eval_ast/2, Env, Children)};
@@ -61,8 +58,6 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   #{ self := Self } = Env,
   erruby_object:def_method(Self, Name, Args, Body),
   Self;
-
-
 
 
 eval_ast(Ast, Env) ->
