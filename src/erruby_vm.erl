@@ -23,7 +23,7 @@ eval_ast({ast, type, self, children, []}, Env) ->
 
 eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
-  Env#{ret_val => binary_to_list(SBin)};
+  new_string(binary_to_list(SBin), Env);
 
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
@@ -34,13 +34,15 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
   #{ self := Self } = Env,
   Target = case Receiver of
-    undefined -> Self;
-    _ -> eval_ast(Receiver)
-  end,
+             undefined -> Self;
+             _ -> eval_ast(Receiver)
+           end,
   Method = erruby_object:find_method(Target, Msg),
-  Result = Method(EvaledArgs),
-  LastEnv = lists:last(Envs),
-  LastEnv#{ret_val => Result};
+  LastEnv = case Envs of
+              [] -> Env;
+              _ -> lists:last(Envs)
+            end,
+  eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, lvasgn, children, Children}, #{ lvars := LVars } = Env) ->
   [Name, ValAst] = Children,
@@ -57,16 +59,34 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   [Name | [ {ast, type, args, children, Args} , Body ] ] = Children,
   #{ self := Self } = Env,
   erruby_object:def_method(Self, Name, Args, Body),
-  Env#{ret_val => Name};
+  new_symbol(Name, Env);
 
 eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
   print_ast(Ast),
   print_env(Env).
 
+eval_method(Target,Method, Args, Env) when is_function(Method) ->
+  Method(Args, new_frame(Env,Target));
+
+eval_method(Target,Method, Args, Env) ->
+  erruby_debug:debug_tmp("evaling rb method:~p~n Args:~p~n Env:~p~n",[Method, Args, Env]),
+  NewFrame = new_frame(Env,Target),
+  erruby_debug:debug_tmp("new Env:~p~n",[NewFrame]),
+  Env.
+
 eval_ast(Ast) ->
   Env = default_env(),
   eval_ast(Ast, Env).
+
+new_string(String, Env) ->
+  Env#{ret_val => String}.
+
+new_symbol(Symbol, Env) ->
+  Env#{ret_val => Symbol}.
+
+new_frame(Env, Self) ->
+  Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
 
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),

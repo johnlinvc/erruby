@@ -1,6 +1,6 @@
-def hello_world
-  "dummy"
-  "hello world"
+def hello_world_method
+  str = "hello world"
+  str
 end
 
-puts hello_world()
+puts hello_world_method()

@@ -4,7 +4,7 @@
 -export([new_kernel/0,  def_method/4, find_method/2]).
 
 init([]) ->
-  Methods = #{puts => fun method_puts/1},
+  Methods = #{puts => fun method_puts/2},
   IVars = #{},
   State = #{self => self(), methods => Methods, ivars => IVars},
   {ok, State}.
@@ -25,16 +25,16 @@ find_method(Self, Name) ->
 def_method(Self, Name, Args, Body) ->
   gen_server:call(Self, #{type => def_method, name => Name, args => Args, body => Body}).
 
-new_kernel() ->
-  start_link().
 
 handle_info(Info, State) ->
   io:format("Got unkwon info:~n~p~n", [Info]),
   {ok, State}.
 
-handle_call(#{ type := def_method }=Msg, _From, State) ->
-  io:format("Got def_method:~n~p~n", [Msg]),
-  {reply, done, State};
+handle_call(#{ type := def_method , name := Name, body := Body, args := Args}=Msg, _From, #{methods := Methods} =State) ->
+  erruby_debug:debug_tmp("Got def_method:~n~p~n", [Msg]),
+  NewMethods = Methods#{ Name => #{ args => Args, body => Body, argc => length(Args) } },
+  NewState = State#{ methods := NewMethods},
+  {reply, Name, NewState};
 
 handle_call(#{ type := find_method, name := Name }, _From, State) ->
   #{methods := #{Name := Method}} = State,
@@ -50,5 +50,9 @@ handle_cast(_Req, State) ->
   NewState = State,
   {reply, done, NewState}.
 
-method_puts(Strings) ->
-  [ io:format("~s~n", [Str]) || Str <- Strings ].
+method_puts(Strings, Env) ->
+  [ io:format("~s~n", [Str]) || Str <- Strings ],
+  Env#{ret_val => nil}.
+
+new_kernel() ->
+  start_link().
