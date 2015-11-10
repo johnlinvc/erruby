@@ -15,7 +15,7 @@ scanl(F, Acc0, [H | T]) ->
 
 eval_ast({ast,type,'begin',children, Children}, Env) ->
   erruby_debug:debug_2("eval begin~n",[]),
-  Env#{ret_val => lists:foldl(fun eval_ast/2, Env, Children)};
+  lists:foldl(fun eval_ast/2, Env, Children);
 
 eval_ast({ast, type, self, children, []}, Env) ->
   #{ self := Self } = Env,
@@ -67,8 +67,7 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  ExtractedArgs = [ X || #{ret_val := X} <- Args],
-  Method(ExtractedArgs, new_frame(Env,Target));
+  Method(Args, new_frame(Env,Target));
 
 eval_method(Target,Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),
