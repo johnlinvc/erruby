@@ -30,8 +30,7 @@ handle_info(Info, State) ->
   io:format("Got unkwon info:~n~p~n", [Info]),
   {ok, State}.
 
-handle_call(#{ type := def_method , name := Name, body := Body, args := Args}=Msg, _From, #{methods := Methods} =State) ->
-  erruby_debug:debug_tmp("Got def_method:~n~p~n", [Msg]),
+handle_call(#{ type := def_method , name := Name, body := Body, args := Args}=_Msg, _From, #{methods := Methods} =State) ->
   NewMethods = Methods#{ Name => #{ args => Args, body => Body, argc => length(Args) } },
   NewState = State#{ methods := NewMethods},
   {reply, Name, NewState};

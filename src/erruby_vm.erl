@@ -67,13 +67,13 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  Method(Args, new_frame(Env,Target));
+  ExtractedArgs = [ X || #{ret_val := X} <- Args],
+  Method(ExtractedArgs, new_frame(Env,Target));
 
 eval_method(Target,Method, Args, Env) ->
-  erruby_debug:debug_tmp("evaling rb method:~p~n Args:~p~n Env:~p~n",[Method, Args, Env]),
   NewFrame = new_frame(Env,Target),
-  erruby_debug:debug_tmp("new Env:~p~n",[NewFrame]),
-  Env.
+  #{body := Body} = Method,
+  eval_ast(Body, NewFrame).
 
 eval_ast(Ast) ->
   Env = default_env(),
