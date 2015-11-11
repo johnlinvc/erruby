@@ -67,7 +67,7 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  Method(Args, new_frame(Env,Target));
+  Method( new_frame(Env,Target) ,Args );
 
 eval_method(Target,Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),

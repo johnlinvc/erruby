@@ -49,7 +49,7 @@ handle_cast(_Req, State) ->
   NewState = State,
   {reply, done, NewState}.
 
-method_puts(Strings, Env) ->
+method_puts(Env, Strings) ->
   [ io:format("~s~n", [Str]) || Str <- Strings ],
   Env#{ret_val => nil}.
 
