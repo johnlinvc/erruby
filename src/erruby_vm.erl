@@ -44,11 +44,11 @@ eval_ast({ast,type,send, children, Children}, Env) ->
             end,
   eval_method(Target,Method, EvaledArgs, LastEnv);
 
-eval_ast({ast, type, lvasgn, children, Children}, #{ lvars := LVars } = Env) ->
+eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
   NewEnv = eval_ast(ValAst, Env),
   #{ret_val := RetVal } = NewEnv,
-  NewEnv#{ lvars := LVars#{ Name => RetVal }};
+  bind_lvar(Name, RetVal, NewEnv);
 
 %TODO also search for local vars
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
@@ -69,10 +69,15 @@ eval_ast(Ast, Env) ->
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
   Method( new_frame(Env,Target) ,Args );
 
-eval_method(Target,Method, Args, Env) ->
+eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),
-  #{body := Body} = Method,
-  eval_ast(Body, NewFrame).
+  ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
+  NameWithArgs = lists:zip( ArgNames, Args),
+  NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, NewFrame, NameWithArgs),
+  eval_ast(Body, NewFrameWithArgs).
+
+bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
+  Env#{ lvars := LVars#{ Name => Val }}.
 
 eval_ast(Ast) ->
   Env = default_env(),
