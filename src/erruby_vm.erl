@@ -74,7 +74,9 @@ eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
   NameWithArgs = lists:zip( ArgNames, Args),
   NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, NewFrame, NameWithArgs),
-  eval_ast(Body, NewFrameWithArgs).
+  #{ret_val := RetVal} = eval_ast(Body, NewFrameWithArgs),
+  Env#{ret_val := RetVal}.
+
 
 bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
   Env#{ lvars := LVars#{ Name => Val }}.
