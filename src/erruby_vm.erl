@@ -44,12 +44,18 @@ eval_ast({ast,type,send, children, Children}, Env) ->
             end,
   eval_method(Target,Method, EvaledArgs, LastEnv);
 
-eval_ast({ast, type, block, children, [Method | [Args | Body]]= Children}, Env) ->
-  erruby_debug:debug_tmp("block~n",[]),
+eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
+  %erruby_debug:debug_tmp("block~n",[]),
   Block = #{body => Body, args => Args},
   BlockEnv = Env#{block => Block},
   Result = eval_ast(Method, BlockEnv),
   Result#{block => nil};
+
+eval_ast({ast, type, yield, children, Children}, Env) ->
+  %erruby_debug:debug_tmp("yield block~n",[]),
+  [print_ast(Ast) || Ast <- Children],
+  #{block := #{body := Body, args := Args}} = Env,
+  eval_ast(Body,Env);
 
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,

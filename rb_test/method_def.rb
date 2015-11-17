@@ -8,9 +8,8 @@ def hello_world_method_1(name)
 end
 
 def hello_world_method_block(n)
-  "FIXME remove me"
-  puts "im here"
-  yield
+  puts n
+  puts yield
 end
 
 puts hello_world_method_0
