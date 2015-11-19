@@ -30,18 +30,15 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
   [print_ast(Ast) || Ast <- Children],
   [Receiver | [Msg | Args]] = Children,
-  [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
+  ReceiverFrame = receiver_or_self(Receiver, Env),
+  #{ ret_val := Target} = ReceiverFrame,
+  [_ |Envs] = scanl(fun eval_ast/2, ReceiverFrame, Args),
   EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
-  #{ self := Self } = Env,
-  Target = case Receiver of
-             undefined -> Self;
-             _ -> eval_ast(Receiver)
-           end,
-  Method = erruby_object:find_method(Target, Msg),
   LastEnv = case Envs of
-              [] -> Env;
+              [] -> ReceiverFrame;
               _ -> lists:last(Envs)
             end,
+  Method = erruby_object:find_method(Target, Msg),
   eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
@@ -93,6 +90,12 @@ eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
 
 bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
   Env#{ lvars := LVars#{ Name => Val }}.
+
+receiver_or_self(undefined, Env) ->
+  #{ self := Self } = Env,
+  Env#{ret_val := Self};
+receiver_or_self(Receiver, Env) ->
+  eval_ast(Receiver,Env).
 
 eval_ast(Ast) ->
   Env = default_env(),
