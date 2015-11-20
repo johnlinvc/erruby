@@ -42,17 +42,24 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
-  %erruby_debug:debug_tmp("block~n",[]),
   Block = #{body => Body, args => Args},
   BlockEnv = Env#{block => Block},
   Result = eval_ast(Method, BlockEnv),
   Result#{block => nil};
 
-eval_ast({ast, type, yield, children, Children}, Env) ->
-  %erruby_debug:debug_tmp("yield block~n",[]),
-  [print_ast(Ast) || Ast <- Children],
-  #{block := #{body := Body, args := Args}} = Env,
-  eval_ast(Body,Env);
+eval_ast({ast, type, yield, children, Args}, Env) ->
+  [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
+  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
+  LastEnv = case Envs of
+              [] -> Env;
+              _ -> lists:last(Envs)
+            end,
+  #{block := #{body := Body, args := {ast, type, args, children, ArgNamesAst}}} = LastEnv,
+  ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
+  NameWithArgs = lists:zip( ArgNames, EvaledArgs),
+  NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, LastEnv, NameWithArgs),
+  Result = eval_ast(Body,NewFrameWithArgs),
+  Result;
 
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
@@ -60,8 +67,9 @@ eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   #{ret_val := RetVal } = NewEnv,
   bind_lvar(Name, RetVal, NewEnv);
 
-%TODO also search for local vars
+%TODO also search for methods
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
+  erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
   Env#{ ret_val => Val};
 
@@ -77,15 +85,14 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  Method( new_frame(Env,Target) ,Args );
+  pop_frame(Method( new_frame(Env,Target) ,Args ));
 
 eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),
   ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
   NameWithArgs = lists:zip( ArgNames, Args),
   NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, NewFrame, NameWithArgs),
-  #{ret_val := RetVal} = eval_ast(Body, NewFrameWithArgs),
-  Env#{ret_val := RetVal}.
+  pop_frame( eval_ast(Body, NewFrameWithArgs)).
 
 
 bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
@@ -109,6 +116,11 @@ new_symbol(Symbol, Env) ->
 
 new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
+
+pop_frame(Frame) ->
+  #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
+  PrevFrame#{ret_val := RetVal}.
+
 
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),

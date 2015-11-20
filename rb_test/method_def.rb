@@ -2,6 +2,7 @@ str = "not this"
 def hello_world_method_0
   "hello world no arg"
 end
+
 def hello_world_method_1(name)
   str = name
   str
@@ -10,6 +11,15 @@ end
 def hello_world_method_block(n)
   puts n
   puts yield
+end
+
+def yield_with_arg(s,x)
+  yield s,x
+end
+
+yield_with_arg("yield with","arg") do |ss, xx|
+  puts ss
+  puts xx
 end
 
 puts hello_world_method_0
