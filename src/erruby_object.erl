@@ -4,7 +4,10 @@
 -export([new_kernel/0,  def_method/4, find_method/2]).
 
 init([]) ->
-  Methods = #{puts => fun method_puts/2},
+  Methods = #{
+    puts => fun method_puts/2,
+    self => fun method_self/1
+   },
   IVars = #{},
   State = #{self => self(), methods => Methods, ivars => IVars},
   {ok, State}.
@@ -52,6 +55,9 @@ handle_cast(_Req, State) ->
 method_puts(Env, Strings) ->
   [ io:format("~s~n", [Str]) || Str <- Strings ],
   Env#{ret_val => nil}.
+
+method_self(#{self := Self}=Env) ->
+  Env#{ret_val => Self}.
 
 new_kernel() ->
   start_link().
