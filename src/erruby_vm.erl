@@ -124,4 +124,5 @@ pop_frame(Frame) ->
 
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),
-  #{self => Kernal, lvars => #{}}.
+  {ok, Const} = erruby_const:start_link(),
+  #{self => Kernal, lvars => #{}, const => Const}.
