@@ -79,6 +79,21 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   erruby_object:def_method(Self, Name, Args, Body),
   new_symbol(Name, Env);
 
+%TODO figure out the Unknown field in AST
+%TODO add multi layer CONST def
+eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
+  NewEnv = eval_ast(ValAst, Env),
+  #{ret_val := Val} = NewEnv,
+  erruby_object:def_const(Self, Name, Val),
+  NewEnv;
+
+%TODO figure out the Unknown field in AST
+%TODO add multi layer CONST find
+eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
+  Const = erruby_object:find_const(Self, Name),
+  Env#{ret_val := Const};
+
+
 eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
   print_ast(Ast),
