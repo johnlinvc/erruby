@@ -1,6 +1,12 @@
-class Foo < Bar
+class Foo
   def method
     "hello world"
-    self
   end
+  def hello
+    puts method
+  end
+  self.hello
 end
+
+f = Foo.new
+f.hello

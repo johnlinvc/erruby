@@ -1,5 +1,6 @@
 -module(erruby_vm).
 -export([eval_ast/1, scanl/3]).
+-export([new_nil/1]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -80,6 +81,26 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   new_symbol(Name, Env);
 
 %TODO figure out the Unknown field in AST
+eval_ast({ast, type, class, children,
+          [NameAst,Unknown,Body] = Children}, #{ self := Self } = Env) ->
+  {_,_,const,_,[_,Name]} = NameAst,
+  NameEnv = eval_ast(NameAst,Env),
+  #{ret_val := ClassConst} = NameEnv,
+  Class = case ClassConst of
+    nil -> {ok, NewClass} = erruby_object:new_kernel(),
+           erruby_object:def_const(Self, Name, NewClass),
+           NewClass;
+      _ -> ClassConst
+    end,
+  NewFrame = new_frame(NameEnv, Class),
+  ResultFrame = eval_ast(Body,NewFrame),
+  %erruby_debug:debug_tmp("class def Class:~p~n", [Class]),
+  %erruby_debug:debug_tmp("class def Class Name:~p~n", [Name]),
+  %erruby_debug:debug_tmp("class def NameEnv:~p~n", [NameEnv]),
+  pop_frame(ResultFrame);
+
+
+%TODO figure out the Unknown field in AST
 %TODO add multi layer CONST def
 eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
   NewEnv = eval_ast(ValAst, Env),
@@ -91,7 +112,7 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 %TODO add multi layer CONST find
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
   Const = erruby_object:find_const(Self, Name),
-  Env#{ret_val := Const};
+  Env#{ret_val => Const};
 
 
 eval_ast(Ast, Env) ->
@@ -131,6 +152,9 @@ new_symbol(Symbol, Env) ->
 
 new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
+
+new_nil(Env) ->
+  Env#{ret_val => nil}.
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,

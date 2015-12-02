@@ -56,7 +56,7 @@ handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{const
   {reply, Name, NewState};
 
 handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=State) ->
-  #{Name := Value} = Consts,
+  Value = maps:get(Name, Consts, nil),
   {reply, Value, State};
 
 handle_call(_Req, _From, State) ->
