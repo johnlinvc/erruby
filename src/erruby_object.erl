@@ -1,20 +1,32 @@
 -module(erruby_object).
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([new_kernel/0,  def_method/4, find_method/2, def_const/3, find_const/2]).
+-export([new_kernel/0,  def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+
+init([#{super_class := SuperClass}]) ->
+  default_init();
 
 init([]) ->
+  default_init().
+
+default_init() ->
   Methods = #{
     puts => fun method_puts/2,
-    self => fun method_self/1
+    self => fun method_self/1,
+    new => fun method_new/1
    },
   IVars = #{},
   Consts = #{'Object' => self()},
   State = #{self => self(), methods => Methods, ivars => IVars, consts => Consts},
   {ok, State}.
 
+
 start_link() ->
   gen_server:start_link(?MODULE, [], []).
+
+start_link(SuperClass) ->
+  gen_server:start_link(?MODULE, [SuperClass], []).
+
 
 terminate(_Arg, _State) ->
   {ok, dead}.
@@ -69,12 +81,23 @@ handle_cast(_Req, State) ->
   NewState = State,
   {reply, done, NewState}.
 
-method_puts(Env, Strings) ->
-  [ io:format("~s~n", [Str]) || Str <- Strings ],
+%TODO support va args
+method_puts(Env, String) ->
+  io:format("~s~n", [String]),
   Env#{ret_val => nil}.
 
 method_self(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
 
+method_new(#{self := Self}=Env) ->
+  Env#{ret_val => Self}.
+
 new_kernel() ->
   start_link().
+
+init_object_class() ->
+  gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]).
+
+object_class() ->
+  whereis(erruby_object_class).
+

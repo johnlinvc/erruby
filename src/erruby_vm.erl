@@ -121,7 +121,10 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  pop_frame(Method( new_frame(Env,Target) ,Args ));
+  NewFrame = new_frame(Env,Target),
+  MethodArgs = [NewFrame | Args],
+  ResultFrame = apply(Method, MethodArgs),
+  pop_frame(ResultFrame);
 
 eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),
@@ -160,7 +163,7 @@ pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
   PrevFrame#{ret_val := RetVal}.
 
-
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),
+  {ok, _ObjectClass} = erruby_object:init_object_class(),
   #{self => Kernal, lvars => #{}}.

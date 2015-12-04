@@ -1,12 +1,20 @@
 class Foo
-  def method
+  def message
     "hello world"
   end
   def hello
-    puts method
+    puts message
   end
-  self.hello
 end
-
+class Bar
+  def message
+    "hello bar"
+  end
+  def hello
+    puts message
+  end
+end
 f = Foo.new
 f.hello
+
+Bar.new.hello
