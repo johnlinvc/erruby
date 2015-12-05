@@ -2,6 +2,7 @@
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 -export([new_kernel/0,  def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([init_class_class/0, class_class/0,new_class/0]).
 
 init([#{super_class := SuperClass}]) ->
   default_init();
@@ -25,8 +26,7 @@ start_link() ->
   gen_server:start_link(?MODULE, [], []).
 
 start_link(SuperClass) ->
-  gen_server:start_link(?MODULE, [SuperClass], []).
-
+  gen_server:start_link(?MODULE, [#{super_class => SuperClass }], []).
 
 terminate(_Arg, _State) ->
   {ok, dead}.
@@ -89,15 +89,26 @@ method_puts(Env, String) ->
 method_self(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
 
+%FIXME new a real class
 method_new(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
 
 new_kernel() ->
   start_link().
 
+new_class() ->
+  start_link(class_class()).
+
+%TODO lazy init
+init_class_class() ->
+  gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]).
+
 init_object_class() ->
   gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]).
 
 object_class() ->
+  whereis(erruby_object_class).
+
+class_class() ->
   whereis(erruby_object_class).
 

@@ -87,7 +87,7 @@ eval_ast({ast, type, class, children,
   NameEnv = eval_ast(NameAst,Env),
   #{ret_val := ClassConst} = NameEnv,
   Class = case ClassConst of
-    nil -> {ok, NewClass} = erruby_object:new_kernel(),
+    nil -> {ok, NewClass} = erruby_object:new_class(),
            erruby_object:def_const(Self, Name, NewClass),
            NewClass;
       _ -> ClassConst
@@ -166,4 +166,5 @@ pop_frame(Frame) ->
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),
   {ok, _ObjectClass} = erruby_object:init_object_class(),
+  {ok, _ClassClass} = erruby_object:init_class_class(),
   #{self => Kernal, lvars => #{}}.
