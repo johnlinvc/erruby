@@ -1,6 +1,6 @@
 -module(erruby_vm).
 -export([eval_ast/1, scanl/3]).
--export([new_nil/1]).
+-export([new_nil/1, new_string/2]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -81,6 +81,7 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   new_symbol(Name, Env);
 
 %TODO figure out the Unknown field in AST
+%TODO impl ancestors
 eval_ast({ast, type, class, children,
           [NameAst,Unknown,Body] = Children}, #{ self := Self } = Env) ->
   {_,_,const,_,[_,Name]} = NameAst,

@@ -19,7 +19,9 @@ default_state() ->
   Methods = #{
     puts => fun method_puts/2,
     self => fun method_self/1,
-    new => fun method_new/1
+    new => fun method_new/1,
+    inspect => fun method_inspect/1,
+    to_s => fun method_to_s/1
    },
   IVars = #{},
   Consts = #{'Object' => self()},
@@ -105,6 +107,14 @@ method_self(#{self := Self}=Env) ->
 method_new(#{self := Klass}=Env) ->
   {ok, NewObject} = start_link(Klass),
   Env#{ret_val => NewObject}.
+
+method_inspect(#{self := Self}=Env) ->
+  S = io_lib:format("#<Object:~p>",[Self]),
+  erruby_vm:new_string(S,Env).
+
+method_to_s(#{self := Self}=Env) ->
+  S = io_lib:format("~p",[Self]),
+  erruby_vm:new_string(S,Env).
 
 new_kernel() ->
   start_link().

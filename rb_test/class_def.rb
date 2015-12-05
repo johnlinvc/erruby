@@ -16,5 +16,7 @@ class Bar
 end
 f = Foo.new
 f.hello
+ff = Foo.new
+puts ff.inspect
 
 Bar.new.hello
