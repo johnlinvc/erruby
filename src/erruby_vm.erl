@@ -1,5 +1,6 @@
 -module(erruby_vm).
 -export([eval_ast/1, scanl/3]).
+-export([new_nil/1, new_string/2]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -80,6 +81,27 @@ eval_ast({ast, type, def, children, Children}, Env) ->
   new_symbol(Name, Env);
 
 %TODO figure out the Unknown field in AST
+%TODO impl ancestors
+eval_ast({ast, type, class, children,
+          [NameAst,Unknown,Body] = Children}, #{ self := Self } = Env) ->
+  {_,_,const,_,[_,Name]} = NameAst,
+  NameEnv = eval_ast(NameAst,Env),
+  #{ret_val := ClassConst} = NameEnv,
+  Class = case ClassConst of
+    nil -> {ok, NewClass} = erruby_object:new_class(),
+           erruby_object:def_const(Self, Name, NewClass),
+           NewClass;
+      _ -> ClassConst
+    end,
+  NewFrame = new_frame(NameEnv, Class),
+  ResultFrame = eval_ast(Body,NewFrame),
+  %erruby_debug:debug_tmp("class def Class:~p~n", [Class]),
+  %erruby_debug:debug_tmp("class def Class Name:~p~n", [Name]),
+  %erruby_debug:debug_tmp("class def NameEnv:~p~n", [NameEnv]),
+  pop_frame(ResultFrame);
+
+
+%TODO figure out the Unknown field in AST
 %TODO add multi layer CONST def
 eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
   NewEnv = eval_ast(ValAst, Env),
@@ -91,7 +113,7 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 %TODO add multi layer CONST find
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
   Const = erruby_object:find_const(Self, Name),
-  Env#{ret_val := Const};
+  Env#{ret_val => Const};
 
 
 eval_ast(Ast, Env) ->
@@ -100,7 +122,10 @@ eval_ast(Ast, Env) ->
   print_env(Env).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
-  pop_frame(Method( new_frame(Env,Target) ,Args ));
+  NewFrame = new_frame(Env,Target),
+  MethodArgs = [NewFrame | Args],
+  ResultFrame = apply(Method, MethodArgs),
+  pop_frame(ResultFrame);
 
 eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),
@@ -132,11 +157,15 @@ new_symbol(Symbol, Env) ->
 new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
 
+new_nil(Env) ->
+  Env#{ret_val => nil}.
+
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
   PrevFrame#{ret_val := RetVal}.
 
-
 default_env() ->
   {ok, Kernal} = erruby_object:new_kernel(),
+  {ok, _ObjectClass} = erruby_object:init_object_class(),
+  {ok, _ClassClass} = erruby_object:init_class_class(),
   #{self => Kernal, lvars => #{}}.

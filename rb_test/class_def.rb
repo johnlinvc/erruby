@@ -1,6 +1,22 @@
-class Foo < Bar
-  def method
+class Foo
+  def message
     "hello world"
-    self
+  end
+  def hello
+    puts message
   end
 end
+class Bar
+  def message
+    "hello bar"
+  end
+  def hello
+    puts message
+  end
+end
+f = Foo.new
+f.hello
+ff = Foo.new
+puts ff.inspect
+
+Bar.new.hello
