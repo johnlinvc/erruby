@@ -140,7 +140,7 @@ bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
 
 receiver_or_self(undefined, Env) ->
   #{ self := Self } = Env,
-  Env#{ret_val := Self};
+  Env#{ret_val => Self};
 receiver_or_self(Receiver, Env) ->
   eval_ast(Receiver,Env).
 
