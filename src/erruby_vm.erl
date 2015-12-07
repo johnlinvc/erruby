@@ -1,6 +1,7 @@
 -module(erruby_vm).
 -export([eval_ast/1, scanl/3]).
 -export([new_nil/1, new_string/2]).
+-export([eval_method_with_exit/5]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -40,7 +41,7 @@ eval_ast({ast,type,send, children, Children}, Env) ->
               _ -> lists:last(Envs)
             end,
   Method = erruby_object:find_method(Target, Msg),
-  eval_method(Target,Method, EvaledArgs, LastEnv);
+  process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
   Block = #{body => Body, args => Args},
@@ -120,6 +121,24 @@ eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
   print_ast(Ast),
   print_env(Env).
+
+process_eval_method(Target,Method,Args,Env) ->
+  Pid = spawn(?MODULE, eval_method_with_exit, [Target,Method,Args,Env, self()]),
+  receive
+    {method_result, Pid, Result} ->
+      Result
+  end.
+
+eval_method_with_exit(Target,Method,Args,Env, Sender) ->
+  try
+    Result = eval_method(Target, Method, Args, Env),
+    Respond = {method_result, self(),Result},
+    Sender ! Respond
+  catch
+    _:E ->
+      io:format("error ~p ~n", [E]),
+      erlang:display(erlang:get_stacktrace())
+  end.
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
   NewFrame = new_frame(Env,Target),
