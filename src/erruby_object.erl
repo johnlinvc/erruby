@@ -1,8 +1,9 @@
 -module(erruby_object).
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
--export([new_kernel/0,  def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
 -export([init_class_class/0, class_class/0,new_class/0]).
+-export([init_main_object/0, main_object/0]).
 
 init([#{class := Class}]) ->
   DefaultState = default_state(),
@@ -46,9 +47,13 @@ find_method(Self, Name) ->
   Klass = get_class(Self),
   gen_server:call(Klass, #{type => find_method, name => Name}).
 
-%TODO: we need frame when running
 def_method(Self, Name, Args, Body) ->
-  gen_server:call(Self, #{type => def_method, name => Name, args => Args, body => Body}).
+  MainObject = main_object(),
+  Receiver = case Self of
+               MainObject -> object_class();
+               _ -> Self
+             end,
+  gen_server:call(Receiver, #{type => def_method, name => Name, args => Args, body => Body}).
 
 def_const(Self, Name, Value) ->
   gen_server:call(Self, #{type => def_const, name => Name, value => Value}).
@@ -116,9 +121,6 @@ method_to_s(#{self := Self}=Env) ->
   S = io_lib:format("~p",[Self]),
   erruby_vm:new_string(S,Env).
 
-new_kernel() ->
-  start_link().
-
 new_class() ->
   start_link(class_class()).
 
@@ -129,9 +131,15 @@ init_class_class() ->
 init_object_class() ->
   gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]).
 
+init_main_object() ->
+  gen_server:start_link({local, erruby_main_object}, ?MODULE, [#{class => object_class() }],[]).
+
 object_class() ->
   whereis(erruby_object_class).
 
 class_class() ->
   whereis(erruby_class_class).
+
+main_object() ->
+  whereis(erruby_main_object).
 

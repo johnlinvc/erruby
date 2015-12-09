@@ -184,7 +184,7 @@ pop_frame(Frame) ->
   PrevFrame#{ret_val := RetVal}.
 
 default_env() ->
-  {ok, Kernal} = erruby_object:new_kernel(),
   {ok, _ObjectClass} = erruby_object:init_object_class(),
   {ok, _ClassClass} = erruby_object:init_class_class(),
-  #{self => Kernal, lvars => #{}}.
+  {ok, MainObject} = erruby_object:init_main_object(),
+  #{self => MainObject, lvars => #{}}.
