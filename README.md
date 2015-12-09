@@ -29,3 +29,6 @@ Last, compile ErRuby with:
 
 	rebar compile
 	
+## License
+
+ErRuby is licensed to you under MIT license. See the [COPYING.txt](CCOPYING.txt) file for more details.
