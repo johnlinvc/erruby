@@ -7,6 +7,7 @@ install_boolean_classes() ->
   install_method(TrueClass, FalseClass, '!', fun method_not/1),
   install_method(TrueClass, FalseClass, '==', fun method_eq/2),
   install_method(TrueClass, FalseClass, '&', fun method_and/2),
+  install_method(TrueClass, FalseClass, '^', fun method_xor/2),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_true, TrueClass),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_false, FalseClass),
   ok.
@@ -40,6 +41,38 @@ method_and(#{self := Self} = Env, Object) ->
     False -> new_false(Env);
     _ -> Env#{ret_val := Self}
   end.
+
+and_op(B1,B2) ->
+  True = true_pid(),
+  False = false_pid(),
+  case B1 of
+    True -> B2;
+    False -> False
+  end.
+
+or_op(B1,B2) ->
+  True = true_pid(),
+  False = false_pid(),
+  case B1 of
+    True -> True;
+    False -> B2
+  end.
+
+not_op(Boolean) ->
+  True = true_pid(),
+  False = false_pid(),
+  case Boolean of
+    True -> False;
+    False -> True
+  end.
+
+
+method_xor(#{self := Self} = Env, Object) ->
+  Another = Object,
+  NotAandB = and_op(not_op(Self),Another),
+  AandNotB = and_op(Self, not_op(Another)),
+  RetVal = or_op(NotAandB, AandNotB),
+  Env#{ret_val := RetVal}.
 
 
 %TODO remove this & use the one in object
