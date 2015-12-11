@@ -27,6 +27,12 @@ eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
   new_string(binary_to_list(SBin), Env);
 
+eval_ast({ast, type, true, children, []}, Env) ->
+  erruby_boolean:new_true(Env);
+
+eval_ast({ast, type, false, children, []}, Env) ->
+  erruby_boolean:new_false(Env);
+
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
@@ -187,4 +193,8 @@ default_env() ->
   {ok, _ObjectClass} = erruby_object:init_object_class(),
   {ok, _ClassClass} = erruby_object:init_class_class(),
   {ok, MainObject} = erruby_object:init_main_object(),
+  init_builtin_class(),
   #{self => MainObject, lvars => #{}}.
+
+init_builtin_class() ->
+  ok = erruby_boolean:install_boolean_classes().
