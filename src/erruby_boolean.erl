@@ -1,13 +1,13 @@
 -module(erruby_boolean).
 -export([install_boolean_classes/0,new_true/1,new_false/1]).
-%methods
--export([method_not/1]).
 
 install_boolean_classes() ->
   {ok, TrueClass} = erruby_object:new_class(),
   {ok, FalseClass} = erruby_object:new_class(),
   erruby_object:def_method(TrueClass, '!', fun method_not/1),
   erruby_object:def_method(FalseClass, '!', fun method_not/1),
+  erruby_object:def_method(TrueClass, '==', fun method_eq/2),
+  erruby_object:def_method(FalseClass, '==', fun method_eq/2),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_true, TrueClass),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_false, FalseClass),
   ok.
@@ -29,3 +29,9 @@ method_not(#{self := Self} = Env) ->
     False -> True
   end,
   Env#{ret_val => RetVal}.
+
+method_eq(#{self := Self}=Env, Object) ->
+  case Object of
+    Self -> new_true(Env);
+    _ -> new_false(Env)
+  end.

@@ -151,7 +151,9 @@ init_class_class() ->
   gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]).
 
 init_object_class() ->
-  gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]).
+  {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
+  install_object_class_methods(),
+  {ok, Pid}.
 
 init_main_object() ->
   new_object_with_pid_symbol(erruby_main_object, object_class()).
@@ -164,4 +166,16 @@ class_class() ->
 
 main_object() ->
   whereis(erruby_main_object).
+
+install_object_class_methods() ->
+  %TODO use this after inherent is done
+  %def_method(object_class(), '==', fun method_eq/2).
+  ok.
+
+method_eq(#{self := Self}=Env, Object) ->
+  RetVal = case Object of
+             Self -> erruby_boolean:new_true();
+             _ -> erruby_boolean:new_false()
+           end,
+  Env#{ret_val => RetVal}.
 
