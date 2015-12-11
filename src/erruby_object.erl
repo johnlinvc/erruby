@@ -2,11 +2,17 @@
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 %for vm
--export([def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_method/4, find_instance_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2]).
--export([init_class_class/0, class_class/0,new_class/0]).
+-export([init_class_class/0, class_class/0]).
 -export([init_main_object/0, main_object/0]).
+-export([start_link/2, start_link/1]).
+
+init([#{class := Class, properties := Properties}]) ->
+  DefaultState = default_state(),
+  StateWithClass = add_class_to_state(DefaultState, Class),
+  {ok, add_property_to_state(StateWithClass, Properties)};
 
 init([#{class := Class}]) ->
   DefaultState = default_state(),
@@ -18,25 +24,26 @@ init([]) ->
 add_class_to_state(State, Class) ->
   State#{class => Class}.
 
-%TODO in method_class return defalut class_class if no class is present
+add_property_to_state(State, Properties) ->
+  State#{properties => Properties}.
+
+%TODO in method_class return defalut object_class if no class is present
 default_state() ->
-  Methods = #{
-    puts => fun method_puts/2,
-    self => fun method_self/1,
-    new => fun method_new/1,
-    inspect => fun method_inspect/1,
-    to_s => fun method_to_s/1
-   },
+  Methods = #{},
   IVars = #{},
   Consts = #{'Object' => self()},
-  #{self => self(), methods => Methods, ivars => IVars, consts => Consts}.
+  #{self => self(),
+    methods => Methods,
+    ivars => IVars,
+    properties => #{},
+    consts => Consts}.
 
-
-start_link() ->
-  gen_server:start_link(?MODULE, [], []).
 
 start_link(Class) ->
   gen_server:start_link(?MODULE, [#{class => Class }], []).
+
+start_link(Class, Properties) ->
+  gen_server:start_link(?MODULE, [#{class => Class, properties => Properties}], []).
 
 terminate(_Arg, _State) ->
   {ok, dead}.
@@ -46,9 +53,12 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 get_class(Self) ->
   gen_server:call(Self, #{type => get_class}).
 
-find_method(Self, Name) ->
+find_instance_method(Self, Name) ->
   Klass = get_class(Self),
   gen_server:call(Klass, #{type => find_method, name => Name}).
+
+find_method(Self, Name) ->
+  gen_server:call(Self, #{type => find_method, name => Name}).
 
 self_or_object_class(Self) ->
   MainObject = main_object(),
@@ -89,9 +99,19 @@ handle_call(#{ type := def_method, name := Name, func := Func}=_Msg, _From, #{me
   NewState = State#{ methods := NewMethods},
   {reply, Name, NewState};
 
-handle_call(#{ type := find_method, name := Name }, _From, State) ->
-  #{methods := #{Name := Method}} = State,
-  {reply, Method, State};
+handle_call(#{ type := find_method, name := Name }, _From, #{methods := Methods} = State) ->
+  erruby_debug:debug_2("finding method:~p~n in State:~p~n",[Name, State]),
+  case maps:is_key(Name,Methods) of
+    true ->
+      #{Name := Method} = Methods,
+      {reply, Method, State};
+    false ->
+      %TODO use error classes
+      %io:format("Method ~p not found~n",[Name]),
+      erruby_debug:debug_2("finding in ancestors:~p~n",[ancestors(State)]),
+      Method = find_method_in_ancestors(ancestors(State), Name),
+      {reply, Method, State}
+  end;
 
 handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{consts := Consts}=State) ->
   NewConsts = Consts#{Name => Value},
@@ -103,7 +123,7 @@ handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=St
   {reply, Value, State};
 
 handle_call(#{ type := get_class}, _From, State) ->
-  Value = maps:get(class, State, class_class()),
+  Value = maps:get(class, State, object_class()),
   {reply, Value, State};
 
 
@@ -138,9 +158,6 @@ method_to_s(#{self := Self}=Env) ->
   S = io_lib:format("~p",[Self]),
   erruby_vm:new_string(S,Env).
 
-new_class() ->
-  start_link(class_class()).
-
 new_object_with_pid_symbol(Symbol, Class) ->
   gen_server:start_link({local, Symbol}, ?MODULE, [#{class => Class}], []).
 
@@ -148,7 +165,9 @@ new_object_with_pid_symbol(Symbol, Class) ->
 %TODO use new_object_with_pid_symbol
 %TODO lazy init
 init_class_class() ->
-  gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]).
+  {ok, Pid} = gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]),
+  ok = install_class_class_methods(),
+  {ok, Pid}.
 
 init_object_class() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
@@ -170,6 +189,14 @@ main_object() ->
 install_object_class_methods() ->
   %TODO use this after inherent is done
   %def_method(object_class(), '==', fun method_eq/2).
+  def_method(object_class(), 'puts', fun method_puts/2),
+  def_method(object_class(), 'self', fun method_self/1),
+  def_method(object_class(), 'inspect', fun method_inspect/1),
+  def_method(object_class(), 'to_s', fun method_to_s/1),
+  ok.
+
+install_class_class_methods() ->
+  def_method(class_class(), 'new', fun method_new/1),
   ok.
 
 method_eq(#{self := Self}=Env, Object) ->
@@ -179,3 +206,25 @@ method_eq(#{self := Self}=Env, Object) ->
            end,
   Env#{ret_val => RetVal}.
 
+super_class(#{properties := Properties}=_State) ->
+  maps:get(superclass, Properties, object_class()).
+
+%TODO handle include & extend
+ancestors(State) ->
+  SuperClass = super_class(State),
+  ObjectClass = object_class(),
+  case self() of
+    ObjectClass -> [];
+    _ -> [SuperClass, ObjectClass]
+  end.
+
+find_method_in_ancestors([], _Name) ->
+  nil;
+
+find_method_in_ancestors(Ancestors, Name) ->
+  [Klass | Rest] = Ancestors,
+  Method = find_method(Klass, Name),
+  case Method of
+    nil -> find_method_in_ancestors(Rest, Name);
+    _ -> Method
+  end.

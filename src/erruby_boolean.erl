@@ -2,8 +2,8 @@
 -export([install_boolean_classes/0,new_true/1,new_false/1]).
 
 install_boolean_classes() ->
-  {ok, TrueClass} = erruby_object:new_class(),
-  {ok, FalseClass} = erruby_object:new_class(),
+  {ok, TrueClass} = erruby_class:new_class(),
+  {ok, FalseClass} = erruby_class:new_class(),
   install_method(TrueClass, FalseClass, '!', fun method_not/1),
   install_method(TrueClass, FalseClass, '==', fun method_eq/2),
   install_method(TrueClass, FalseClass, '&', fun method_and/2),
