@@ -1,7 +1,10 @@
 -module(erruby_object).
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
+%for vm
 -export([def_method/4, find_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+%for other buildtin class
+-export([def_method/3, new_object_with_pid_symbol/2]).
 -export([init_class_class/0, class_class/0,new_class/0]).
 -export([init_main_object/0, main_object/0]).
 
@@ -47,13 +50,23 @@ find_method(Self, Name) ->
   Klass = get_class(Self),
   gen_server:call(Klass, #{type => find_method, name => Name}).
 
-def_method(Self, Name, Args, Body) ->
+self_or_object_class(Self) ->
   MainObject = main_object(),
-  Receiver = case Self of
-               MainObject -> object_class();
-               _ -> Self
-             end,
+  case Self of
+    MainObject -> object_class();
+    _ -> Self
+  end.
+
+
+def_method(Self, Name, Args, Body) ->
+  Receiver = self_or_object_class(Self),
   gen_server:call(Receiver, #{type => def_method, name => Name, args => Args, body => Body}).
+
+def_method(Self,Name,Func) when is_function(Func) ->
+  Receiver = self_or_object_class(Self),
+  erruby_debug:debug_tmp("def_with_func:~p",[Func]),
+  gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
+
 
 def_const(Self, Name, Value) ->
   gen_server:call(Self, #{type => def_const, name => Name, value => Value}).
@@ -69,6 +82,12 @@ handle_info(Info, State) ->
 
 handle_call(#{ type := def_method , name := Name, body := Body, args := Args}=_Msg, _From, #{methods := Methods} =State) ->
   NewMethods = Methods#{ Name => #{ args => Args, body => Body, argc => length(Args) } },
+  NewState = State#{ methods := NewMethods},
+  {reply, Name, NewState};
+
+handle_call(#{ type := def_method, name := Name, func := Func}=_Msg, _From, #{methods := Methods} = State) ->
+  erruby_debug:debug_tmp("def_with_func",[]),
+  NewMethods = Methods#{ Name => Func },
   NewState = State#{ methods := NewMethods},
   {reply, Name, NewState};
 
@@ -124,6 +143,11 @@ method_to_s(#{self := Self}=Env) ->
 new_class() ->
   start_link(class_class()).
 
+new_object_with_pid_symbol(Symbol, Class) ->
+  gen_server:start_link({local, Symbol}, ?MODULE, [#{class => Class}], []).
+
+
+%TODO use new_object_with_pid_symbol
 %TODO lazy init
 init_class_class() ->
   gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]).
@@ -132,7 +156,7 @@ init_object_class() ->
   gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]).
 
 init_main_object() ->
-  gen_server:start_link({local, erruby_main_object}, ?MODULE, [#{class => object_class() }],[]).
+  new_object_with_pid_symbol(erruby_main_object, object_class()).
 
 object_class() ->
   whereis(erruby_object_class).
