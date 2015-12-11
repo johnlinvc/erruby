@@ -16,3 +16,7 @@ nil | false
 nil | ""
 
 nil.inspect
+
+nil.nil?
+
+nil.to_s

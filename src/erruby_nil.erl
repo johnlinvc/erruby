@@ -7,6 +7,8 @@ install_nil_class() ->
   erruby_object:def_method(NilClass, '^', fun method_xor/2),
   erruby_object:def_method(NilClass, '|', fun method_xor/2),
   erruby_object:def_method(NilClass, inspect, fun method_inspect/1),
+  erruby_object:def_method(NilClass, 'nil?', fun 'method_nil_q'/1),
+  erruby_object:def_method(NilClass, 'to_s', fun 'method_to_s'/1),
   erruby_object:new_object_with_pid_symbol(erruby_nil, NilClass),
   ok.
 
@@ -25,5 +27,8 @@ method_xor(Env, Obj) ->
     _ -> erruby_boolean:new_true(Env)
   end.
 
-method_inspect(Env) ->
-  erruby_vm:new_string("nil",Env).
+method_inspect(Env) -> erruby_vm:new_string("nil",Env).
+
+method_nil_q(Env) -> erruby_boolean:new_true(Env).
+
+method_to_s(Env) -> erruby_vm:new_string("",Env).
