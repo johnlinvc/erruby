@@ -4,10 +4,7 @@ class Foo
   end
 end
 
-class Bar
-  def to_s
-    "bar"
-  end
+class Bar < Foo
 end
 
 puts Foo.new.to_s
