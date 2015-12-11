@@ -27,3 +27,5 @@ false | false
 puts true.to_s
 puts false.to_s
 
+puts true.inspect
+puts false.inspect

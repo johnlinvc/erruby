@@ -11,6 +11,8 @@ install_boolean_classes() ->
   install_method(TrueClass, FalseClass, '|', fun method_or/2),
   erruby_object:def_method(TrueClass, to_s, fun method_true_to_s/1),
   erruby_object:def_method(FalseClass, to_s, fun method_false_to_s/1),
+  erruby_object:def_method(TrueClass, inspect, fun method_true_to_s/1),
+  erruby_object:def_method(FalseClass, inspect, fun method_false_to_s/1),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_true, TrueClass),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_false, FalseClass),
   ok.
