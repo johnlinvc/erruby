@@ -27,6 +27,9 @@ eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
   new_string(binary_to_list(SBin), Env);
 
+eval_ast({ast, type, nil, children, []}, Env) ->
+  erruby_nil:new_nil(Env);
+
 eval_ast({ast, type, true, children, []}, Env) ->
   erruby_boolean:new_true(Env);
 
@@ -210,7 +213,7 @@ new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
 
 new_nil(Env) ->
-  Env#{ret_val => nil}.
+  erruby_nil:new_nil(Env).
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
@@ -224,4 +227,5 @@ default_env() ->
   #{self => MainObject, lvars => #{}}.
 
 init_builtin_class() ->
+  ok = erruby_nil:install_nil_class(),
   ok = erruby_boolean:install_boolean_classes().
