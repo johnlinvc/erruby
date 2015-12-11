@@ -1,5 +1,5 @@
 -module(erruby_boolean).
--export([install_boolean_classes/0,new_true/1,new_false/1]).
+-export([install_boolean_classes/0,new_true/1,new_false/1,true_pid/0,false_pid/0]).
 %TODO register the True & False class in Const
 
 install_boolean_classes() ->
