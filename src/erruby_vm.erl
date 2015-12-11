@@ -46,7 +46,7 @@ eval_ast({ast,type,send, children, Children}, Env) ->
               [] -> ReceiverFrame;
               _ -> lists:last(Envs)
             end,
-  Method = erruby_object:find_method(Target, Msg),
+  Method = erruby_object:find_instance_method(Target, Msg),
   process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
@@ -90,22 +90,44 @@ eval_ast({ast, type, def, children, Children}, Env) ->
 %TODO figure out the Unknown field in AST
 %TODO impl ancestors
 eval_ast({ast, type, class, children,
-          [NameAst,Unknown,Body] = Children}, #{ self := Self } = Env) ->
+          [NameAst,undefined,Body] = _Children}, #{ self := Self } = Env) ->
   {_,_,const,_,[_,Name]} = NameAst,
   NameEnv = eval_ast(NameAst,Env),
   #{ret_val := ClassConst} = NameEnv,
   Class = case ClassConst of
-    nil -> {ok, NewClass} = erruby_object:new_class(),
+    nil -> {ok, NewClass} = erruby_class:new_class(),
            erruby_object:def_const(Self, Name, NewClass),
            NewClass;
       _ -> ClassConst
     end,
   NewFrame = new_frame(NameEnv, Class),
   ResultFrame = eval_ast(Body,NewFrame),
-  %erruby_debug:debug_tmp("class def Class:~p~n", [Class]),
-  %erruby_debug:debug_tmp("class def Class Name:~p~n", [Name]),
-  %erruby_debug:debug_tmp("class def NameEnv:~p~n", [NameEnv]),
   pop_frame(ResultFrame);
+
+%TODO refactor with the one without SupperClass
+eval_ast({ast, type, class, children,
+          [NameAst,SuperClassAst,Body] = _Children}, #{ self := Self } = Env) ->
+  {_,_,const,_,[_,Name]} = NameAst,
+  NameEnv = eval_ast(NameAst,Env),
+  #{ret_val := ClassConst} = NameEnv,
+  SuperClassEnv = eval_ast(SuperClassAst,NameEnv),
+  #{ret_val := SuperClassConst} = SuperClassEnv,
+  %TODO should fail when SuperClassConst is not defined
+  %TODO use nil class instead of nil value
+  Class = case ClassConst of
+            nil -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
+                   erruby_object:def_const(Self, Name, NewClass),
+                   NewClass;
+            _ -> ClassConst
+          end,
+  case Body of
+    undefined -> SuperClassEnv;
+    _ ->
+      NewFrame = new_frame(SuperClassEnv, Class),
+      ResultFrame = eval_ast(Body,NewFrame),
+      pop_frame(ResultFrame)
+  end;
+
 
 
 %TODO figure out the Unknown field in AST
@@ -127,6 +149,7 @@ eval_ast(Ast, Env) ->
   erruby_debug:debug_1("Unhandled eval~n",[]),
   print_ast(Ast),
   print_env(Env).
+
 
 process_eval_method(Target,Method,Args,Env) ->
   Pid = spawn(?MODULE, eval_method_with_exit, [Target,Method,Args,Env, self()]),

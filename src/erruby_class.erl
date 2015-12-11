@@ -1,8 +1,10 @@
 -module(erruby_class).
--export([rb_eval_class_ast/1, class_def/1]).
+-export([new_class/0, new_class/1]).
 
-rb_eval_class_ast({ast,type,class,children,Children}) ->
-  io:format("~p ~n",[Children]).
+%TODO add name parameter
+new_class() ->
+  erruby_object:start_link(erruby_object:class_class()).
 
-class_def({ast,type,class,children,Children})->
-  io:format("define class ~p ~n",[Children]).
+new_class(SuperClass) ->
+  Properties = #{superclass => SuperClass},
+  erruby_object:start_link(erruby_object:class_class(), Properties).
