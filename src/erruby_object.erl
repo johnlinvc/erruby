@@ -64,7 +64,6 @@ def_method(Self, Name, Args, Body) ->
 
 def_method(Self,Name,Func) when is_function(Func) ->
   Receiver = self_or_object_class(Self),
-  erruby_debug:debug_tmp("def_with_func:~p",[Func]),
   gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
 
 
@@ -86,7 +85,6 @@ handle_call(#{ type := def_method , name := Name, body := Body, args := Args}=_M
   {reply, Name, NewState};
 
 handle_call(#{ type := def_method, name := Name, func := Func}=_Msg, _From, #{methods := Methods} = State) ->
-  erruby_debug:debug_tmp("def_with_func",[]),
   NewMethods = Methods#{ Name => Func },
   NewState = State#{ methods := NewMethods},
   {reply, Name, NewState};
