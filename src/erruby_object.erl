@@ -206,8 +206,12 @@ method_eq(#{self := Self}=Env, Object) ->
            end,
   Env#{ret_val => RetVal}.
 
-ancestors(#{properties := Properties}=_State) ->
-  #{superclass := SuperClass} = Properties,
+super_class(#{properties := Properties}=_State) ->
+  maps:get(superclass, Properties, object_class()).
+
+%TODO handle include & extend
+ancestors(State) ->
+  SuperClass = super_class(State),
   ObjectClass = object_class(),
   case self() of
     ObjectClass -> [];
