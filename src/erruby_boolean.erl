@@ -8,6 +8,7 @@ install_boolean_classes() ->
   install_method(TrueClass, FalseClass, '==', fun method_eq/2),
   install_method(TrueClass, FalseClass, '&', fun method_and/2),
   install_method(TrueClass, FalseClass, '^', fun method_xor/2),
+  install_method(TrueClass, FalseClass, '|', fun method_or/2),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_true, TrueClass),
   erruby_object:new_object_with_pid_symbol(erruby_boolean_false, FalseClass),
   ok.
@@ -66,6 +67,10 @@ not_op(Boolean) ->
     False -> True
   end.
 
+method_or(#{self := Self} = Env, Object) ->
+  Another = Object,
+  RetVal = or_op(Self, Another),
+  Env#{ret_val := RetVal}.
 
 method_xor(#{self := Self} = Env, Object) ->
   Another = Object,
