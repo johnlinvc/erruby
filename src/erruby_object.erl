@@ -193,6 +193,7 @@ install_object_class_methods() ->
   def_method(object_class(), 'self', fun method_self/1),
   def_method(object_class(), 'inspect', fun method_inspect/1),
   def_method(object_class(), 'to_s', fun method_to_s/1),
+  def_method(object_class(), '==', fun method_eq/2),
   ok.
 
 install_class_class_methods() ->
@@ -200,11 +201,10 @@ install_class_class_methods() ->
   ok.
 
 method_eq(#{self := Self}=Env, Object) ->
-  RetVal = case Object of
-             Self -> erruby_boolean:new_true();
-             _ -> erruby_boolean:new_false()
-           end,
-  Env#{ret_val => RetVal}.
+  case Object of
+    Self -> erruby_boolean:new_true(Env);
+    _ -> erruby_boolean:new_false(Env)
+  end.
 
 super_class(#{properties := Properties}=_State) ->
   maps:get(superclass, Properties, object_class()).

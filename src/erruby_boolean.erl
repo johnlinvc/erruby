@@ -5,7 +5,6 @@ install_boolean_classes() ->
   {ok, TrueClass} = erruby_class:new_class(),
   {ok, FalseClass} = erruby_class:new_class(),
   install_method(TrueClass, FalseClass, '!', fun method_not/1),
-  install_method(TrueClass, FalseClass, '==', fun method_eq/2),
   install_method(TrueClass, FalseClass, '&', fun method_and/2),
   install_method(TrueClass, FalseClass, '^', fun method_xor/2),
   install_method(TrueClass, FalseClass, '|', fun method_or/2),
@@ -88,10 +87,3 @@ method_true_to_s(Env) ->
 
 method_false_to_s(Env) ->
   erruby_vm:new_string("false",Env).
-
-%TODO remove this & use the one in object
-method_eq(#{self := Self}=Env, Object) ->
-  case Object of
-    Self -> new_true(Env);
-    _ -> new_false(Env)
-  end.
