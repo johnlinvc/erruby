@@ -27,6 +27,9 @@ eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
   new_string(binary_to_list(SBin), Env);
 
+eval_ast({ast, type, nil, children, []}, Env) ->
+  erruby_nil:new_nil(Env);
+
 eval_ast({ast, type, true, children, []}, Env) ->
   erruby_boolean:new_true(Env);
 
@@ -49,11 +52,11 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   Method = erruby_object:find_instance_method(Target, Msg),
   process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
-eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
+eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= _Children}, Env) ->
   Block = #{body => Body, args => Args},
   BlockEnv = Env#{block => Block},
   Result = eval_ast(Method, BlockEnv),
-  Result#{block => nil};
+  Result#{block => not_exist};
 
 eval_ast({ast, type, yield, children, Args}, Env) ->
   [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
@@ -95,7 +98,7 @@ eval_ast({ast, type, class, children,
   NameEnv = eval_ast(NameAst,Env),
   #{ret_val := ClassConst} = NameEnv,
   Class = case ClassConst of
-    nil -> {ok, NewClass} = erruby_class:new_class(),
+    not_found -> {ok, NewClass} = erruby_class:new_class(),
            erruby_object:def_const(Self, Name, NewClass),
            NewClass;
       _ -> ClassConst
@@ -113,9 +116,8 @@ eval_ast({ast, type, class, children,
   SuperClassEnv = eval_ast(SuperClassAst,NameEnv),
   #{ret_val := SuperClassConst} = SuperClassEnv,
   %TODO should fail when SuperClassConst is not defined
-  %TODO use nil class instead of nil value
   Class = case ClassConst of
-            nil -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
+            not_found -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
                    erruby_object:def_const(Self, Name, NewClass),
                    NewClass;
             _ -> ClassConst
@@ -140,10 +142,11 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 
 %TODO figure out the Unknown field in AST
 %TODO add multi layer CONST find
+%TODO throw error when not_found
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
   NestedConst = erruby_object:find_const(Self, Name),
   Const = case NestedConst of
-            nil -> erruby_object:find_const(erruby_object:object_class(), Name);
+            not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
             _ -> NestedConst
           end,
   Env#{ret_val => Const};
@@ -207,10 +210,10 @@ new_symbol(Symbol, Env) ->
   Env#{ret_val => Symbol}.
 
 new_frame(Env, Self) ->
-  Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
+  Env#{lvars => #{}, ret_val => not_exist, self => Self, prev_frame => Env}.
 
 new_nil(Env) ->
-  Env#{ret_val => nil}.
+  erruby_nil:new_nil(Env).
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
@@ -224,4 +227,5 @@ default_env() ->
   #{self => MainObject, lvars => #{}}.
 
 init_builtin_class() ->
+  ok = erruby_nil:install_nil_class(),
   ok = erruby_boolean:install_boolean_classes().

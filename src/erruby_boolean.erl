@@ -1,5 +1,7 @@
 -module(erruby_boolean).
--export([install_boolean_classes/0,new_true/1,new_false/1]).
+-export([install_boolean_classes/0,new_true/1,new_false/1,true_pid/0,false_pid/0]).
+%TODO register the True & False class in Const
+%TODO rename *_pid to *_instance
 
 install_boolean_classes() ->
   {ok, TrueClass} = erruby_class:new_class(),
@@ -38,13 +40,20 @@ method_not(#{self := Self} = Env) ->
   end,
   Env#{ret_val => RetVal}.
 
-%TODO handle nil
 method_and(#{self := Self} = Env, Object) ->
+  Another = object_to_boolean(Object),
+  RetVal = and_op(Self, Another),
+  Env#{ret_val := RetVal}.
+
+object_to_boolean(Object) ->
+  NilObject = erruby_nil:nil_instance(),
   False = false_pid(),
   case Object of
-    False -> new_false(Env);
-    _ -> Env#{ret_val := Self}
+    NilObject -> false_pid();
+    False -> false_pid();
+    _ -> true_pid()
   end.
+
 
 and_op(B1,B2) ->
   True = true_pid(),
@@ -71,12 +80,12 @@ not_op(Boolean) ->
   end.
 
 method_or(#{self := Self} = Env, Object) ->
-  Another = Object,
+  Another = object_to_boolean(Object),
   RetVal = or_op(Self, Another),
   Env#{ret_val := RetVal}.
 
 method_xor(#{self := Self} = Env, Object) ->
-  Another = Object,
+  Another = object_to_boolean(Object),
   NotAandB = and_op(not_op(Self),Another),
   AandNotB = and_op(Self, not_op(Another)),
   RetVal = or_op(NotAandB, AandNotB),

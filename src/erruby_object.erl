@@ -122,7 +122,7 @@ handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{const
 
 handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=State) ->
   erruby_debug:debug_2("finding const:~p~nin State:~p~n",[Name, State]),
-  Value = maps:get(Name, Consts, nil),
+  Value = maps:get(Name, Consts, not_found),
   {reply, Value, State};
 
 handle_call(#{ type := get_class}, _From, State) ->
@@ -143,7 +143,7 @@ handle_cast(_Req, State) ->
 %TODO support va args
 method_puts(Env, String) ->
   io:format("~s~n", [String]),
-  Env#{ret_val => nil}.
+  erruby_nil:new_nil(Env).
 
 method_self(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
@@ -223,12 +223,12 @@ ancestors(State) ->
   end.
 
 find_method_in_ancestors([], _Name) ->
-  nil;
+  not_found;
 
 find_method_in_ancestors(Ancestors, Name) ->
   [Klass | Rest] = Ancestors,
   Method = find_method(Klass, Name),
   case Method of
-    nil -> find_method_in_ancestors(Rest, Name);
+    not_found -> find_method_in_ancestors(Rest, Name);
     _ -> Method
   end.
