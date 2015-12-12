@@ -5,7 +5,6 @@
 -export([def_method/4, find_instance_method/2, def_global_const/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2]).
--export([init_class_class/0, class_class/0]).
 -export([init_main_object/0, main_object/0]).
 -export([start_link/2, start_link/1]).
 
@@ -151,11 +150,6 @@ method_puts(Env, String) ->
 method_self(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
 
-%FIXME new a real class
-method_new(#{self := Klass}=Env) ->
-  {ok, NewObject} = start_link(Klass),
-  Env#{ret_val => NewObject}.
-
 method_inspect(#{self := Self}=Env) ->
   S = io_lib:format("#<Object:~p>",[Self]),
   erruby_vm:new_string(S,Env).
@@ -167,18 +161,10 @@ method_to_s(#{self := Self}=Env) ->
 new_object_with_pid_symbol(Symbol, Class) ->
   gen_server:start_link({local, Symbol}, ?MODULE, [#{class => Class}], []).
 
-
-%TODO use new_object_with_pid_symbol
-%TODO lazy init
-init_class_class() ->
-  {ok, Pid} = gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]),
-  ok = install_class_class_methods(),
-  'Object' = def_const(Pid, 'Object', Pid),
-  {ok, Pid}.
-
 init_object_class() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
   install_object_class_methods(),
+  'Object' = def_const(Pid, 'Object', Pid),
   {ok, Pid}.
 
 init_main_object() ->
@@ -186,9 +172,6 @@ init_main_object() ->
 
 object_class() ->
   whereis(erruby_object_class).
-
-class_class() ->
-  whereis(erruby_class_class).
 
 main_object() ->
   whereis(erruby_main_object).
@@ -203,9 +186,6 @@ install_object_class_methods() ->
   def_method(object_class(), '==', fun method_eq/2),
   ok.
 
-install_class_class_methods() ->
-  def_method(class_class(), 'new', fun method_new/1),
-  ok.
 
 method_eq(#{self := Self}=Env, Object) ->
   case Object of

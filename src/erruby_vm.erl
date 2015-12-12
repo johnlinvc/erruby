@@ -221,7 +221,7 @@ pop_frame(Frame) ->
 
 default_env() ->
   {ok, _ObjectClass} = erruby_object:init_object_class(),
-  {ok, _ClassClass} = erruby_object:init_class_class(),
+  {ok, _ClassClass} = erruby_class:init_class_class(),
   {ok, MainObject} = erruby_object:init_main_object(),
   init_builtin_class(),
   #{self => MainObject, lvars => #{}}.
