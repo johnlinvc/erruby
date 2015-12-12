@@ -31,7 +31,7 @@ add_property_to_state(State, Properties) ->
 default_state() ->
   Methods = #{},
   IVars = #{},
-  Consts = #{'Object' => self()},
+  Consts = #{},
   #{self => self(),
     methods => Methods,
     ivars => IVars,
@@ -78,9 +78,11 @@ def_method(Self,Name,Func) when is_function(Func) ->
 
 
 def_const(Self, Name, Value) ->
-  gen_server:call(Self, #{type => def_const, name => Name, value => Value}).
+  Receiver = self_or_object_class(Self),
+  gen_server:call(Receiver, #{type => def_const, name => Name, value => Value}).
 
 find_const(Self, Name) ->
+  erruby_debug:debug_2("finding on ~p for const:~p~n",[Self, Name]),
   gen_server:call(Self, #{type => find_const, name => Name}).
 
 
@@ -119,6 +121,7 @@ handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{const
   {reply, Name, NewState};
 
 handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=State) ->
+  erruby_debug:debug_2("finding const:~p~nin State:~p~n",[Name, State]),
   Value = maps:get(Name, Consts, nil),
   {reply, Value, State};
 
@@ -167,6 +170,7 @@ new_object_with_pid_symbol(Symbol, Class) ->
 init_class_class() ->
   {ok, Pid} = gen_server:start_link({local, erruby_class_class}, ?MODULE, [],[]),
   ok = install_class_class_methods(),
+  'Object' = def_const(Pid, 'Object', Pid),
   {ok, Pid}.
 
 init_object_class() ->
