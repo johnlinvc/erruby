@@ -1,5 +1,5 @@
 -module(erruby_nil).
--export([new_nil/1, install_nil_class/0]).
+-export([new_nil/1, install_nil_class/0, nil_pid/0]).
 
 install_nil_class() ->
   {ok, NilClass} = erruby_class:new_class(),
