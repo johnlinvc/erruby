@@ -141,7 +141,11 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 %TODO figure out the Unknown field in AST
 %TODO add multi layer CONST find
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
-  Const = erruby_object:find_const(Self, Name),
+  NestedConst = erruby_object:find_const(Self, Name),
+  Const = case NestedConst of
+            nil -> erruby_object:find_const(erruby_object:object_class(), Name);
+            _ -> NestedConst
+          end,
   Env#{ret_val => Const};
 
 
