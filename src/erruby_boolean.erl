@@ -1,7 +1,6 @@
 -module(erruby_boolean).
 -export([install_boolean_classes/0,new_true/1,new_false/1,true_instance/0,false_instance/0]).
 %TODO register the True & False class in Const
-%TODO rename *_pid to *_instance
 
 install_boolean_classes() ->
   {ok, TrueClass} = erruby_class:new_class(),
