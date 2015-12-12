@@ -52,11 +52,11 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   Method = erruby_object:find_instance_method(Target, Msg),
   process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
-eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= Children}, Env) ->
+eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= _Children}, Env) ->
   Block = #{body => Body, args => Args},
   BlockEnv = Env#{block => Block},
   Result = eval_ast(Method, BlockEnv),
-  Result#{block => nil};
+  Result#{block => not_exist};
 
 eval_ast({ast, type, yield, children, Args}, Env) ->
   [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
@@ -210,7 +210,7 @@ new_symbol(Symbol, Env) ->
   Env#{ret_val => Symbol}.
 
 new_frame(Env, Self) ->
-  Env#{lvars => #{}, ret_val => nil, self => Self, prev_frame => Env}.
+  Env#{lvars => #{}, ret_val => not_exist, self => Self, prev_frame => Env}.
 
 new_nil(Env) ->
   erruby_nil:new_nil(Env).
