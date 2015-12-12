@@ -1,6 +1,7 @@
 -module(erruby_boolean).
 -export([install_boolean_classes/0,new_true/1,new_false/1,true_pid/0,false_pid/0]).
 %TODO register the True & False class in Const
+%TODO rename *_pid to *_instance
 
 install_boolean_classes() ->
   {ok, TrueClass} = erruby_class:new_class(),
@@ -45,7 +46,7 @@ method_and(#{self := Self} = Env, Object) ->
   Env#{ret_val := RetVal}.
 
 object_to_boolean(Object) ->
-  NilObject = erruby_nil:nil_pid(),
+  NilObject = erruby_nil:nil_instance(),
   False = false_pid(),
   case Object of
     NilObject -> false_pid();

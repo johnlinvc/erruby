@@ -1,5 +1,5 @@
 -module(erruby_nil).
--export([new_nil/1, install_nil_class/0, nil_pid/0]).
+-export([new_nil/1, install_nil_class/0, nil_instance/0]).
 
 install_nil_class() ->
   {ok, NilClass} = erruby_class:new_class(),
@@ -12,14 +12,14 @@ install_nil_class() ->
   erruby_object:new_object_with_pid_symbol(erruby_nil, NilClass),
   ok.
 
-new_nil(Env) -> Env#{ret_val => nil_pid()}.
+new_nil(Env) -> Env#{ret_val => nil_instance()}.
 
-nil_pid() -> whereis(erruby_nil).
+nil_instance() -> whereis(erruby_nil).
 
 method_and(Env, _Obj) -> erruby_boolean:new_false(Env).
 
 method_xor(Env, Obj) ->
-  Nil = nil_pid(),
+  Nil = nil_instance(),
   False = erruby_boolean:false_pid(),
   case Obj of
     Nil -> erruby_boolean:new_false(Env);
