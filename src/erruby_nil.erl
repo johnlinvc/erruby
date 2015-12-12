@@ -3,6 +3,7 @@
 
 install_nil_class() ->
   {ok, NilClass} = erruby_class:new_class(),
+  'NilClass' = erruby_object:def_global_const('NilClass', NilClass),
   erruby_object:def_method(NilClass, '&', fun method_and/2),
   erruby_object:def_method(NilClass, '^', fun method_xor/2),
   erruby_object:def_method(NilClass, '|', fun method_xor/2),

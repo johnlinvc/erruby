@@ -5,6 +5,8 @@
 install_boolean_classes() ->
   {ok, TrueClass} = erruby_class:new_class(),
   {ok, FalseClass} = erruby_class:new_class(),
+  'TrueClass' = erruby_object:def_global_const('TrueClass', TrueClass),
+  'FalseClass' = erruby_object:def_global_const('FalseClass', FalseClass),
   install_method(TrueClass, FalseClass, '!', fun method_not/1),
   install_method(TrueClass, FalseClass, '&', fun method_and/2),
   install_method(TrueClass, FalseClass, '^', fun method_xor/2),

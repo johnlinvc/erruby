@@ -2,7 +2,7 @@
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 %for vm
--export([def_method/4, find_instance_method/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_method/4, find_instance_method/2, def_global_const/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2]).
 -export([init_class_class/0, class_class/0]).
@@ -75,6 +75,9 @@ def_method(Self, Name, Args, Body) ->
 def_method(Self,Name,Func) when is_function(Func) ->
   Receiver = self_or_object_class(Self),
   gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
+
+def_global_const(Name, Value) ->
+  gen_server:call(object_class(), #{type => def_const, name => Name, value => Value}).
 
 
 def_const(Self, Name, Value) ->
