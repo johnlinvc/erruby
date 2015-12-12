@@ -143,7 +143,7 @@ handle_cast(_Req, State) ->
 %TODO support va args
 method_puts(Env, String) ->
   io:format("~s~n", [String]),
-  Env#{ret_val => nil}.
+  erruby_nil:new_nil(Env).
 
 method_self(#{self := Self}=Env) ->
   Env#{ret_val => Self}.
