@@ -116,7 +116,6 @@ eval_ast({ast, type, class, children,
   SuperClassEnv = eval_ast(SuperClassAst,NameEnv),
   #{ret_val := SuperClassConst} = SuperClassEnv,
   %TODO should fail when SuperClassConst is not defined
-  %TODO use nil class instead of nil value
   Class = case ClassConst of
             not_found -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
                    erruby_object:def_const(Self, Name, NewClass),
