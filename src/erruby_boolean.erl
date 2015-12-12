@@ -1,5 +1,5 @@
 -module(erruby_boolean).
--export([install_boolean_classes/0,new_true/1,new_false/1,true_instance/0,false_pid/0]).
+-export([install_boolean_classes/0,new_true/1,new_false/1,true_instance/0,false_instance/0]).
 %TODO register the True & False class in Const
 %TODO rename *_pid to *_instance
 
@@ -23,17 +23,17 @@ install_method(TC, FC, Name, Func) ->
   erruby_object:def_method(FC, Name, Func).
 
 new_true(Env) -> Env#{ret_val => true_instance()}.
-new_false(Env) -> Env#{ret_val => false_pid()}.
+new_false(Env) -> Env#{ret_val => false_instance()}.
 
 true_instance() ->
   whereis(erruby_boolean_true).
 
-false_pid() ->
+false_instance() ->
   whereis(erruby_boolean_false).
 
 method_not(#{self := Self} = Env) ->
   True = true_instance(),
-  False = false_pid(),
+  False = false_instance(),
   RetVal = case Self of
     True -> False;
     False -> True
@@ -47,17 +47,17 @@ method_and(#{self := Self} = Env, Object) ->
 
 object_to_boolean(Object) ->
   NilObject = erruby_nil:nil_instance(),
-  False = false_pid(),
+  False = false_instance(),
   case Object of
-    NilObject -> false_pid();
-    False -> false_pid();
+    NilObject -> false_instance();
+    False -> false_instance();
     _ -> true_instance()
   end.
 
 
 and_op(B1,B2) ->
   True = true_instance(),
-  False = false_pid(),
+  False = false_instance(),
   case B1 of
     True -> B2;
     False -> False
@@ -65,7 +65,7 @@ and_op(B1,B2) ->
 
 or_op(B1,B2) ->
   True = true_instance(),
-  False = false_pid(),
+  False = false_instance(),
   case B1 of
     True -> True;
     False -> B2
@@ -73,7 +73,7 @@ or_op(B1,B2) ->
 
 not_op(Boolean) ->
   True = true_instance(),
-  False = false_pid(),
+  False = false_instance(),
   case Boolean of
     True -> False;
     False -> True

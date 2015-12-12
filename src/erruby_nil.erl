@@ -20,7 +20,7 @@ method_and(Env, _Obj) -> erruby_boolean:new_false(Env).
 
 method_xor(Env, Obj) ->
   Nil = nil_instance(),
-  False = erruby_boolean:false_pid(),
+  False = erruby_boolean:false_instance(),
   case Obj of
     Nil -> erruby_boolean:new_false(Env);
     False -> erruby_boolean:new_false(Env);
