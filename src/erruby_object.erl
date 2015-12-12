@@ -223,12 +223,12 @@ ancestors(State) ->
   end.
 
 find_method_in_ancestors([], _Name) ->
-  nil;
+  not_found;
 
 find_method_in_ancestors(Ancestors, Name) ->
   [Klass | Rest] = Ancestors,
   Method = find_method(Klass, Name),
   case Method of
-    nil -> find_method_in_ancestors(Rest, Name);
+    not_found -> find_method_in_ancestors(Rest, Name);
     _ -> Method
   end.
