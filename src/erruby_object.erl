@@ -122,7 +122,7 @@ handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{const
 
 handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=State) ->
   erruby_debug:debug_2("finding const:~p~nin State:~p~n",[Name, State]),
-  Value = maps:get(Name, Consts, nil),
+  Value = maps:get(Name, Consts, not_found),
   {reply, Value, State};
 
 handle_call(#{ type := get_class}, _From, State) ->

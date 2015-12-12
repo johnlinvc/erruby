@@ -98,7 +98,7 @@ eval_ast({ast, type, class, children,
   NameEnv = eval_ast(NameAst,Env),
   #{ret_val := ClassConst} = NameEnv,
   Class = case ClassConst of
-    nil -> {ok, NewClass} = erruby_class:new_class(),
+    not_found -> {ok, NewClass} = erruby_class:new_class(),
            erruby_object:def_const(Self, Name, NewClass),
            NewClass;
       _ -> ClassConst
@@ -118,7 +118,7 @@ eval_ast({ast, type, class, children,
   %TODO should fail when SuperClassConst is not defined
   %TODO use nil class instead of nil value
   Class = case ClassConst of
-            nil -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
+            not_found -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
                    erruby_object:def_const(Self, Name, NewClass),
                    NewClass;
             _ -> ClassConst
@@ -143,10 +143,11 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 
 %TODO figure out the Unknown field in AST
 %TODO add multi layer CONST find
+%TODO throw error when not_found
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
   NestedConst = erruby_object:find_const(Self, Name),
   Const = case NestedConst of
-            nil -> erruby_object:find_const(erruby_object:object_class(), Name);
+            not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
             _ -> NestedConst
           end,
   Env#{ret_val => Const};
