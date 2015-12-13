@@ -3,3 +3,6 @@ otp_release:
    - 18.0
 before_script:
         - bundle install
+script:
+        - rebar compile && ./test.rb
+
