@@ -36,6 +36,12 @@ eval_ast({ast, type, true, children, []}, Env) ->
 eval_ast({ast, type, false, children, []}, Env) ->
   erruby_boolean:new_false(Env);
 
+eval_ast({ast, type, array, children, Args}, Env) ->
+  [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
+  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
+  LastEnv = lists:last(Envs),
+  erruby_array:new_array(LastEnv, EvaledArgs);
+
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
@@ -228,4 +234,5 @@ default_env() ->
 
 init_builtin_class() ->
   ok = erruby_nil:install_nil_class(),
+  ok = erruby_array:install_array_classes(),
   ok = erruby_boolean:install_boolean_classes().
