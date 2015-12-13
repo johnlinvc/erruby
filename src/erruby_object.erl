@@ -7,6 +7,7 @@
 -export([def_method/3, new_object_with_pid_symbol/2, new_object/2]).
 -export([init_main_object/0, main_object/0]).
 -export([start_link/2, start_link/1]).
+-export([get_properties/1, set_properties/2]).
 
 init([#{class := Class, properties := Properties}]) ->
   DefaultState = default_state(),
@@ -92,6 +93,11 @@ find_const(Self, Name) ->
   erruby_debug:debug_2("finding on ~p for const:~p~n",[Self, Name]),
   gen_server:call(Self, #{type => find_const, name => Name}).
 
+get_properties(Self) ->
+  gen_server:call(Self, #{type => get_properties}).
+
+set_properties(Self, Properties) ->
+  gen_server:call(Self, #{type => set_properties, properties => Properties}).
 
 
 handle_info(Info, State) ->
@@ -121,6 +127,13 @@ handle_call(#{ type := find_method, name := Name }, _From, #{methods := Methods}
       Method = find_method_in_ancestors(ancestors(State), Name),
       {reply, Method, State}
   end;
+
+handle_call(#{ type := get_properties }, _From, #{properties := Properties}=State) ->
+  {reply, Properties, State};
+
+handle_call(#{ type := set_properties, properties := Properties }, _From, State) ->
+  NewState = State#{ properties := Properties},
+  {reply, NewState, State};
 
 handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{consts := Consts}=State) ->
   NewConsts = Consts#{Name => Value},
