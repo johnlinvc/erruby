@@ -1,5 +1,5 @@
 # ErRuby - an implementaion of the Ruby language on Erlang
-
+[![Build Status](https://travis-ci.org/johnlinvc/erruby.svg?branch=develop)](https://travis-ci.org/johnlinvc/erruby)
 ## About
 
 ErRuby is an implementaion of the Ruby language using Erlang.
