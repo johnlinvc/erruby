@@ -2,9 +2,9 @@
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 %for vm
--export([def_method/4, find_instance_method/2, def_global_const/2, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_method/4, find_instance_method/2, def_global_const/2, find_global_const/1, def_const/3, find_const/2, init_object_class/0,object_class/0]).
 %for other buildtin class
--export([def_method/3, new_object_with_pid_symbol/2]).
+-export([def_method/3, new_object_with_pid_symbol/2, new_object/2]).
 -export([init_main_object/0, main_object/0]).
 -export([start_link/2, start_link/1]).
 
@@ -38,6 +38,7 @@ default_state() ->
     consts => Consts}.
 
 
+%TODO unify these?
 start_link(Class) ->
   gen_server:start_link(?MODULE, [#{class => Class }], []).
 
@@ -75,8 +76,12 @@ def_method(Self,Name,Func) when is_function(Func) ->
   Receiver = self_or_object_class(Self),
   gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
 
+%TODO call def_const instead
 def_global_const(Name, Value) ->
   gen_server:call(object_class(), #{type => def_const, name => Name, value => Value}).
+
+find_global_const(Name) ->
+  find_const(object_class(), Name).
 
 
 def_const(Self, Name, Value) ->
@@ -158,8 +163,13 @@ method_to_s(#{self := Self}=Env) ->
   S = io_lib:format("~p",[Self]),
   erruby_vm:new_string(S,Env).
 
+%TODO support property?
 new_object_with_pid_symbol(Symbol, Class) ->
   gen_server:start_link({local, Symbol}, ?MODULE, [#{class => Class}], []).
+
+new_object(Class, Payload) when is_map(Payload) ->
+  start_link(Class, Payload).
+
 
 init_object_class() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
