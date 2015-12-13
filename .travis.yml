@@ -1,6 +1,7 @@
 language: erlang
 otp_release:
    - 18.0
+   - 18.1
 before_script:
         - bundle install
 script:
