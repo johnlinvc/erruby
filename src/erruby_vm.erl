@@ -42,6 +42,9 @@ eval_ast({ast, type, array, children, Args}, Env) ->
   LastEnv = lists:last(Envs),
   erruby_array:new_array(LastEnv, EvaledArgs);
 
+eval_ast({ast, type, int, children, [N]}, Env) ->
+  erruby_fixnum:new_fixnum(Env, N);
+
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
@@ -235,4 +238,5 @@ default_env() ->
 init_builtin_class() ->
   ok = erruby_nil:install_nil_class(),
   ok = erruby_array:install_array_classes(),
+  ok = erruby_fixnum:install_fixnum_class(),
   ok = erruby_boolean:install_boolean_classes().
