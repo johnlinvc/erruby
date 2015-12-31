@@ -1,12 +1,12 @@
-# ErRuby - an implementaion of the Ruby language on Erlang
+# ErRuby - an implementation of the Ruby language on Erlang
 [![Build Status](https://travis-ci.org/johnlinvc/erruby.svg?branch=develop)](https://travis-ci.org/johnlinvc/erruby)
 ## About
 
-ErRuby is an implementaion of the Ruby language using Erlang.
+ErRuby is an implementation of the Ruby language using Erlang.
 
 It aims to bring some concurrency features to ruby by experimenting.
 
-It's still a work in progress. So use it at your own rist.
+It's still a work in progress. So use it at your own risk.
 
 ## Install
 
@@ -14,9 +14,9 @@ It's still a work in progress. So use it at your own rist.
  
 - erlang vm
 - rebar2
-- ruby 
+- ruby
 
-To install erlang & erbar on OSX, using homebrew
+To install erlang & rebar on OS X, using homebrew
 
 	brew install erlang rebar
 
@@ -42,4 +42,4 @@ Test the binary with:
 It should output `hello world`
 ## License
 
-ErRuby is licensed to you under MIT license. See the [COPYING.txt](CCOPYING.txt) file for more details.
+ErRuby is licensed to you under MIT license. See the [COPYING.txt](COPYING.txt) file for more details.
