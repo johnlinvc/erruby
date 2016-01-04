@@ -4,7 +4,8 @@
 %%
 %% @TODO inherent from integer & numeric
 install_fixnum_class() ->
-  {ok, FixnumClass} = erruby_class:new_class(),
+  IntegerClass = erruby_object:find_global_const('Integer'),
+  {ok, FixnumClass} = erruby_class:new_class(IntegerClass),
   'Fixnum' = erruby_object:def_global_const('Fixnum', FixnumClass),
   erruby_object:def_method(FixnumClass, to_s, fun method_to_s/1),
   erruby_object:def_method(FixnumClass, '-@', fun method_neg/1),

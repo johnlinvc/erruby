@@ -238,5 +238,6 @@ default_env() ->
 init_builtin_class() ->
   ok = erruby_nil:install_nil_class(),
   ok = erruby_array:install_array_classes(),
+  ok = erruby_integer:install_integer_class(),
   ok = erruby_fixnum:install_fixnum_class(),
   ok = erruby_boolean:install_boolean_classes().
