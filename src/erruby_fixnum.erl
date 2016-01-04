@@ -11,6 +11,13 @@ install_fixnum_class() ->
   erruby_object:def_method(FixnumClass, '+', fun method_add/2),
   erruby_object:def_method(FixnumClass, '-', fun method_minus/2),
   erruby_object:def_method(FixnumClass, '*', fun method_multiplication/2),
+  erruby_object:def_method(FixnumClass, '**', fun method_power/2),
+  erruby_object:def_method(FixnumClass, '<', fun method_less/2),
+  erruby_object:def_method(FixnumClass, '>', fun method_greater/2),
+  erruby_object:def_method(FixnumClass, '<=', fun method_less_equal/2),
+  erruby_object:def_method(FixnumClass, '>=', fun method_greater_equal/2),
+  erruby_object:def_method(FixnumClass, '==', fun method_equal/2),
+  erruby_object:def_method(FixnumClass, '<=>', fun method_cmp/2),
   erruby_object:def_method(FixnumClass, '/', fun method_division/2),
   erruby_object:def_method(FixnumClass, '%', fun method_module/2),
   ok.
@@ -47,9 +54,47 @@ method_multiplication(Env, AnotherFixnum) ->
 method_division(Env, AnotherFixnum) ->
   binary_op(Env, AnotherFixnum, fun (A,B) -> trunc(A/B) end).
 
+method_power(Env, AnotherFixnum) ->
+  binary_op(Env, AnotherFixnum, fun (A,B) -> trunc(math:pow(A,B)) end).
+
 method_neg(#{self := Self}=Env) ->
   Val = - get_val(Self),
   new_fixnum(Env, Val).
 
 method_module(Env, AnotherFixnum) ->
   binary_op(Env, AnotherFixnum, fun (A,B) -> A rem B end).
+
+binary_cmp(#{self := Self}=Env, AnotherFixnum, Fun) ->
+  Val = get_val(Self),
+  AnotherVal = get_val(AnotherFixnum),
+  case Fun(Val,AnotherVal) of
+    true -> erruby_boolean:new_true(Env);
+    false -> erruby_boolean:new_false(Env)
+  end.
+
+method_less(Env, AnotherFixnum) ->
+  binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X < Y end).
+
+method_less_equal(Env, AnotherFixnum) ->
+  binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X =< Y end).
+
+method_greater(Env, AnotherFixnum) ->
+  binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X > Y end).
+
+method_greater_equal(Env, AnotherFixnum) ->
+  binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X >= Y end).
+
+method_equal(Env, AnotherFixnum) ->
+  binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X =:= Y end).
+
+
+cmp_helper(X,Y) when X < Y ->
+  -1;
+cmp_helper(X,Y) when X =:= Y ->
+  0;
+cmp_helper(X,Y) when X > Y ->
+  1.
+
+method_cmp(Env, AnotherFixnum) ->
+  binary_op(Env, AnotherFixnum, fun cmp_helper/2).
+
