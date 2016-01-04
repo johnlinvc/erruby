@@ -72,6 +72,7 @@ binary_cmp(#{self := Self}=Env, AnotherFixnum, Fun) ->
     false -> erruby_boolean:new_false(Env)
   end.
 
+%%TODO move these to the comparator module
 method_less(Env, AnotherFixnum) ->
   binary_cmp(Env, AnotherFixnum, fun (X,Y) -> X < Y end).
 
