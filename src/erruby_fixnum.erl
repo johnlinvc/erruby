@@ -1,5 +1,5 @@
 -module(erruby_fixnum).
--export([install_fixnum_class/0, new_fixnum/2]).
+-export([install_fixnum_class/0, new_fixnum/2, fix_to_int/1]).
 
 %%
 %% @TODO inherent from integer & numeric
@@ -29,6 +29,9 @@ fixnum_class() ->
 new_fixnum(Env, N) ->
   {ok, Obj} = erruby_object:new_object(fixnum_class(), #{val => N}),
   Env#{ret_val => Obj}.
+
+fix_to_int(Fixnum) ->
+  get_val(Fixnum).
 
 get_val(Fixnum) ->
   #{val := Val} = erruby_object:get_properties(Fixnum),
