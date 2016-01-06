@@ -3,9 +3,13 @@ puts 5.to_int.to_s
 puts 5.floor.to_s
 puts 5.ceil.to_s
 puts 5.truncate.to_s
+puts 5.numerator.to_s
+puts 5.ord.to_s
 puts 56.denominator.to_s
 puts 2.even?.to_s
 puts 3.even?.to_s
+puts 2.odd?.to_s
+puts 3.odd?.to_s
 puts 2.gcd(2).to_s
 puts 6.gcd(8).to_s
 puts 8.gcd(6).to_s

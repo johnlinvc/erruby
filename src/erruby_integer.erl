@@ -9,8 +9,11 @@ install_integer_class() ->
   erruby_object:def_method(IntegerClass, floor, fun method_to_i/1),
   erruby_object:def_method(IntegerClass, ceil, fun method_to_i/1),
   erruby_object:def_method(IntegerClass, truncate, fun method_to_i/1),
+  erruby_object:def_method(IntegerClass, numerator, fun method_to_i/1),
+  erruby_object:def_method(IntegerClass, ord, fun method_to_i/1),
   erruby_object:def_method(IntegerClass, denominator, fun method_denominator/1),
   erruby_object:def_method(IntegerClass, 'even?', fun method_even_q/1),
+  erruby_object:def_method(IntegerClass, 'odd?', fun method_odd_q/1),
   erruby_object:def_method(IntegerClass, 'gcd', fun method_gcd/2),
   erruby_object:def_method(IntegerClass, 'lcm', fun method_lcm/2),
   erruby_object:def_method(IntegerClass, 'integer?', fun method_integer_q/1),
@@ -29,6 +32,12 @@ method_even_q(#{self := Self}=Env) ->
   case Int rem 2 of
     0 -> erruby_boolean:new_true(Env);
     1 -> erruby_boolean:new_false(Env)
+  end.
+method_odd_q(#{self := Self}=Env) ->
+  Int = erruby_fixnum:fix_to_int(Self),
+  case Int rem 2 of
+    1 -> erruby_boolean:new_true(Env);
+    0 -> erruby_boolean:new_false(Env)
   end.
 
 %%TODO use binary gcd algo instead
