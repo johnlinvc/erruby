@@ -11,3 +11,13 @@ puts 6.gcd(8).to_s
 puts 8.gcd(6).to_s
 puts 0.gcd(8).to_s
 puts 6.gcd(0).to_s
+puts 2.lcm(2).to_s
+puts 6.lcm(8).to_s
+puts 8.lcm(6).to_s
+puts 0.lcm(8).to_s
+puts 6.lcm(0).to_s
+puts 1.integer?.to_s
+puts 1.next.to_s
+puts (-1).next.to_s
+puts 1.succ.to_s
+puts (-1).succ.to_s
