@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 fail_case = []
 Dir.glob("rb_test/*.rb") do |fn|
-  basename = fn.split('.')[0]
-  outname = basename + ".out"
+  basename = File.basename(fn,'.rb')
+  outname = "rb_test/sysrb_out/#{basename}.out"
+  system("ruby #{fn} > #{outname}")
   unless system("./erruby #{fn} | diff #{outname} -")
     fail_case << fn
     puts "test #{fn} failed"
