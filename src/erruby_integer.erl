@@ -53,7 +53,7 @@ method_gcd(#{self := Self}=Env, AnotherInt) ->
   X = abs(erruby_fixnum:fix_to_int(Self)),
   Y = abs(erruby_fixnum:fix_to_int(AnotherInt)),
   case min(X,Y) of
-    0 -> erruby_fixnum:new_fixnum(Env, 0);
+    0 -> erruby_fixnum:new_fixnum(Env, max(X,Y));
     _ -> erruby_fixnum:new_fixnum(Env, gcd(X,Y))
   end.
 
