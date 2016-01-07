@@ -19,6 +19,7 @@ install_integer_class() ->
   erruby_object:def_method(IntegerClass, 'integer?', fun method_integer_q/1),
   erruby_object:def_method(IntegerClass, 'succ', fun method_succ/1),
   erruby_object:def_method(IntegerClass, 'next', fun method_succ/1),
+  erruby_object:def_method(IntegerClass, 'times', fun method_times/1),
   ok.
 
 method_to_i(#{self := Self}=Env) -> Env#{ret_val => Self}.
@@ -71,3 +72,18 @@ method_integer_q(Env) ->
 
 method_succ(#{self := Self}=Env) ->
   erruby_fixnum:new_fixnum(Env, erruby_fixnum:fix_to_int(Self)+1).
+
+times_range(X) when X =< 0 -> [];
+times_range(X) -> lists:seq(0, X-1).
+
+%%TODO handle empty block case
+%%TODO handle Bigdecimal
+method_times(#{self := Self}=Env) ->
+  Int = erruby_fixnum:fix_to_int(Self),
+  Range = times_range(Int),
+  FoldFun = fun (X, EnvAcc) ->
+                IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
+                #{ret_val := FixInt} = IntEnv,
+                erruby_vm:yield(IntEnv, [FixInt]) end,
+  LastEnv = lists:foldl(FoldFun, Env, Range),
+  LastEnv#{ret_val => Self}.

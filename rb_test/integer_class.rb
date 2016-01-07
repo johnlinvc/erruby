@@ -25,3 +25,6 @@ puts 1.next.to_s
 puts (-1).next.to_s
 puts 1.succ.to_s
 puts (-1).succ.to_s
+puts 5.times {|i| puts i.to_s}.to_s
+puts 0.times {|i| puts i.to_s}.to_s
+puts (-5).times {|i| puts i.to_s}.to_s
