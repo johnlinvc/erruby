@@ -178,7 +178,8 @@ eval_method_with_exit(Target,Method,Args,Env, Sender) ->
     _:E ->
       io:format("error ~p ~n", [E]),
       erlang:display(erlang:get_stacktrace())
-  end.
+  end,
+  exit(normal).
 
 eval_method(Target,Method, Args, Env) when is_function(Method) ->
   NewFrame = new_frame(Env,Target),
@@ -219,8 +220,21 @@ new_frame(Env, Self) ->
 new_nil(Env) ->
   erruby_nil:new_nil(Env).
 
+find_prev_frame(Env) ->
+  case maps:get(prev_frame, Env, no_prev_frame) of
+    no_prev_frame -> throw(cant_find_block);
+    Frame -> Frame
+  end.
+
+find_block(Env) ->
+  case maps:get(block, Env) of
+    not_exist -> find_block(find_prev_frame(Env));
+    Block -> Block
+  end.
+
 yield(Env, Args)->
-  #{block := #{body := Body, args := {ast, type, args, children, ArgNamesAst}}} = Env,
+  Block = find_block(Env),
+  #{body := Body, args := {ast, type, args, children, ArgNamesAst}} = Block,
   ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
   NameWithArgs = lists:zip( ArgNames, Args),
   NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, Env, NameWithArgs),
