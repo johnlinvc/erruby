@@ -1,7 +1,7 @@
 -module(erruby_vm).
 -export([eval_ast/1, scanl/3]).
 -export([new_nil/1, new_string/2]).
--export([eval_method_with_exit/5]).
+-export([eval_method_with_exit/5, yield/2]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -74,12 +74,7 @@ eval_ast({ast, type, yield, children, Args}, Env) ->
               [] -> Env;
               _ -> lists:last(Envs)
             end,
-  #{block := #{body := Body, args := {ast, type, args, children, ArgNamesAst}}} = LastEnv,
-  ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
-  NameWithArgs = lists:zip( ArgNames, EvaledArgs),
-  NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, LastEnv, NameWithArgs),
-  Result = eval_ast(Body,NewFrameWithArgs),
-  Result;
+  yield(LastEnv, EvaledArgs);
 
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
@@ -223,6 +218,14 @@ new_frame(Env, Self) ->
 
 new_nil(Env) ->
   erruby_nil:new_nil(Env).
+
+yield(Env, Args)->
+  #{block := #{body := Body, args := {ast, type, args, children, ArgNamesAst}}} = Env,
+  ArgNames = [ArgName || {ast, type, arg, children, [ArgName]} <- ArgNamesAst],
+  NameWithArgs = lists:zip( ArgNames, Args),
+  NewFrameWithArgs = lists:foldl(fun ({Name, Arg}, EnvAcc) ->  bind_lvar(Name, Arg, EnvAcc) end, Env, NameWithArgs),
+  Result = eval_ast(Body,NewFrameWithArgs),
+  Result.
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
