@@ -1,5 +1,6 @@
 3.times do |i|
-  3.times do |j|
-    puts 1.to_s
+  puts i.to_s
+  4.times do |j|
+    puts j.to_s
   end
 end
