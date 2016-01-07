@@ -70,7 +70,7 @@ method_lcm(#{self := Self}=Env, AnotherInt) ->
   end.
 
 method_integer_q(Env) ->
-  erruby_boolean:new_false(Env).
+  erruby_boolean:new_true(Env).
 
 method_succ(#{self := Self}=Env) ->
   erruby_fixnum:new_fixnum(Env, erruby_fixnum:fix_to_int(Self)+1).
