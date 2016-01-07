@@ -74,6 +74,15 @@ method_integer_q(Env) ->
 method_succ(#{self := Self}=Env) ->
   erruby_fixnum:new_fixnum(Env, erruby_fixnum:fix_to_int(Self)+1).
 
+
+yield_in_range(#{self := Self} = Env,Range) ->
+  FoldFun = fun (X, EnvAcc) ->
+                IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
+                #{ret_val := FixInt} = IntEnv,
+                erruby_vm:yield(IntEnv, [FixInt]) end,
+  LastEnv = lists:foldl(FoldFun, Env, Range),
+  LastEnv#{ret_val => Self}.
+
 times_range(X) when X =< 0 -> [];
 times_range(X) -> lists:seq(0, X-1).
 
@@ -82,12 +91,7 @@ times_range(X) -> lists:seq(0, X-1).
 method_times(#{self := Self}=Env) ->
   Int = erruby_fixnum:fix_to_int(Self),
   Range = times_range(Int),
-  FoldFun = fun (X, EnvAcc) ->
-                IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
-                #{ret_val := FixInt} = IntEnv,
-                erruby_vm:yield(IntEnv, [FixInt]) end,
-  LastEnv = lists:foldl(FoldFun, Env, Range),
-  LastEnv#{ret_val => Self}.
+  yield_in_range(Env,Range).
 
 upto_range(Start,End) when Start > End -> [];
 upto_range(Start,End) -> lists:seq(Start,End).
@@ -96,9 +100,4 @@ method_upto(#{self := Self}=Env, AnotherInteger) ->
   Int = erruby_fixnum:fix_to_int(Self),
   AnotherInt = erruby_fixnum:fix_to_int(AnotherInteger),
   Range = upto_range(Int,AnotherInt),
-  FoldFun = fun (X, EnvAcc) ->
-                IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
-                #{ret_val := FixInt} = IntEnv,
-                erruby_vm:yield(IntEnv, [FixInt]) end,
-  LastEnv = lists:foldl(FoldFun, Env, Range),
-  LastEnv#{ret_val => Self}.
+  yield_in_range(Env,Range).

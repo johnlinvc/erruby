@@ -28,7 +28,6 @@ puts (-1).succ.to_s
 puts 5.times {|i| puts i.to_s}.to_s
 puts 0.times {|i| puts i.to_s}.to_s
 puts (-5).times {|i| puts i.to_s}.to_s
-puts "upto"
 puts (-2).upto(2){|i| puts i.to_s}.to_s
 puts (2).upto(2){|i| puts i.to_s}.to_s
 puts (3).upto(2){|i| puts i.to_s}.to_s
