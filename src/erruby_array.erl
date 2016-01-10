@@ -12,7 +12,7 @@ new_array(Env, Elements) ->
   ArrayClass = erruby_object:find_global_const('Array'),
   Properties = #{elements => Elements},
   {ok, Array} = erruby_object:new_object(ArrayClass, Properties),
-  Env#{ret_val => Array}.
+  erruby_rb:return(Array, Env).
 
 %% @doc the Index is 0-based, not the 1-based of usual erlang
 at(Array, Index) ->
