@@ -28,7 +28,7 @@ fixnum_class() ->
 
 new_fixnum(Env, N) ->
   {ok, Obj} = erruby_object:new_object(fixnum_class(), #{val => N}),
-  Env#{ret_val => Obj}.
+  erruby_rb:return(Obj, Env).
 
 fix_to_int(Fixnum) ->
   get_val(Fixnum).
@@ -41,9 +41,10 @@ binary_op(#{self := Self}=Env, AnotherFixnum, Fun) ->
   Val = Fun(get_val(Self), get_val(AnotherFixnum)),
   new_fixnum(Env, Val).
 
+%% @TODO use new_string instead
 method_to_s(#{self := Self}=Env) ->
   Val = get_val(Self),
-  Env#{ret_val => integer_to_list(Val)}.
+  erruby_rb:return(integer_to_list(Val), Env).
 
 %% TODO handle case where the other is not Fixnum
 method_add(Env, AnotherFixnum) ->
