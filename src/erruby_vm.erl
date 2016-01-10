@@ -22,7 +22,7 @@ eval_ast({ast,type,'begin',children, Children}, Env) ->
 
 eval_ast({ast, type, self, children, []}, Env) ->
   #{ self := Self } = Env,
-  Env#{ret_val => Self};
+  erruby_rb:return(Self, Env);
 
 eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
@@ -74,7 +74,7 @@ eval_ast({ast, type, lvasgn, children, Children}, Env) ->
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
-  Env#{ ret_val => Val};
+  erruby_rb:return(Val, Env);
 
 eval_ast({ast, type, def, children, Children}, Env) ->
   [Name | [ {ast, type, args, children, Args} , Body ] ] = Children,
@@ -145,7 +145,7 @@ eval_ast({ast, type, const, children, [ParentConstAst, Name]}, Env) ->
             not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
             _ -> LocalConst
           end,
-  Env#{ret_val => Const};
+  erruby_rb:return(Const, Env);
 
 
 eval_ast(Ast, Env) ->
@@ -192,7 +192,7 @@ bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
 
 receiver_or_self(undefined, Env) ->
   #{ self := Self } = Env,
-  Env#{ret_val => Self};
+  erruby_rb:return(Self, Env);
 receiver_or_self(Receiver, Env) ->
   eval_ast(Receiver,Env).
 
@@ -201,10 +201,10 @@ eval_ast(Ast) ->
   eval_ast(Ast, Env).
 
 new_string(String, Env) ->
-  Env#{ret_val => String}.
+  erruby_rb:return(String, Env).
 
 new_symbol(Symbol, Env) ->
-  Env#{ret_val => Symbol}.
+  erruby_rb:return(Symbol, Env).
 
 new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => not_exist, self => Self, prev_frame => Env}.
@@ -251,7 +251,7 @@ yield(Env, Args)->
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
-  PrevFrame#{ret_val := RetVal}.
+  erruby_rb:return(RetVal, PrevFrame).
 
 default_env() ->
   {ok, _ObjectClass} = erruby_object:init_object_class(),
