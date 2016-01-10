@@ -82,7 +82,6 @@ eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   #{ret_val := RetVal } = NewEnv,
   bind_lvar(Name, RetVal, NewEnv);
 
-%TODO also search for methods
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
