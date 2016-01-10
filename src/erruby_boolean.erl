@@ -44,7 +44,7 @@ method_not(#{self := Self} = Env) ->
 method_and(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   RetVal = and_op(Self, Another),
-  Env#{ret_val := RetVal}.
+  Env#{ret_val => RetVal}.
 
 object_to_boolean(Object) ->
   NilObject = erruby_nil:nil_instance(),
@@ -83,14 +83,14 @@ not_op(Boolean) ->
 method_or(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   RetVal = or_op(Self, Another),
-  Env#{ret_val := RetVal}.
+  Env#{ret_val => RetVal}.
 
 method_xor(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   NotAandB = and_op(not_op(Self),Another),
   AandNotB = and_op(Self, not_op(Another)),
   RetVal = or_op(NotAandB, AandNotB),
-  Env#{ret_val := RetVal}.
+  Env#{ret_val => RetVal}.
 
 method_true_to_s(Env) ->
   erruby_vm:new_string("true", Env).
