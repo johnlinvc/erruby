@@ -1,4 +1,5 @@
 -module(erruby_vm).
+-include("rb.hrl").
 -export([eval_ast/1, scanl/3]).
 -export([new_nil/1, new_string/2]).
 -export([eval_method_with_exit/5, yield/2]).
@@ -106,9 +107,13 @@ eval_ast({ast, type, class, children,
            NewClass;
       _ -> ClassConst
     end,
-  NewFrame = new_frame(NameEnv, Class),
-  ResultFrame = eval_ast(Body,NewFrame),
-  pop_frame(ResultFrame);
+  case Body of
+    undefined -> NameEnv;
+    _ ->
+      NewFrame = new_frame(NameEnv, Class),
+      ResultFrame = eval_ast(Body,NewFrame),
+      pop_frame(ResultFrame)
+  end;
 
 %TODO refactor with the one without SupperClass
 eval_ast({ast, type, class, children,
@@ -135,22 +140,22 @@ eval_ast({ast, type, class, children,
 
 
 
-%TODO figure out the Unknown field in AST
-%TODO add multi layer CONST def
-eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
-  NewEnv = eval_ast(ValAst, Env),
+eval_ast({ast, type, casgn, children, [ParentConstAst, Name, ValAst] }, Env) ->
+  ParentConstEnv = parent_const_env(ParentConstAst, Env),
+  #{ret_val := ParentConst} = ParentConstEnv,
+  NewEnv = eval_ast(ValAst, ParentConstEnv),
   #{ret_val := Val} = NewEnv,
-  erruby_object:def_const(Self, Name, Val),
+  erruby_object:def_const(ParentConst, Name, Val),
   NewEnv;
 
-%TODO figure out the Unknown field in AST
-%TODO add multi layer CONST find
 %TODO throw error when not_found
-eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
-  NestedConst = erruby_object:find_const(Self, Name),
-  Const = case NestedConst of
+eval_ast({ast, type, const, children, [ParentConstAst, Name]}, Env) ->
+  ParentConstEnv = parent_const_env(ParentConstAst, Env),
+  #{ret_val := ParentConst} = ParentConstEnv,
+  LocalConst = erruby_object:find_const(ParentConst, Name),
+  Const = case LocalConst of
             not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
-            _ -> NestedConst
+            _ -> LocalConst
           end,
   Env#{ret_val => Const};
 
@@ -229,6 +234,12 @@ find_block(Env) ->
   case maps:get(block, Env) of
     not_exist -> find_block(find_prev_frame(Env));
     Block -> Block
+  end.
+
+parent_const_env(ParentConstAst, Env) ->
+  case ParentConstAst of
+    undefined -> erruby_rb:ret_self(Env);
+    {ast, type, const, children, _} -> eval_ast(ParentConstAst, Env)
   end.
 
 yield(Env, Args)->

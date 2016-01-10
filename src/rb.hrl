@@ -1,0 +1,1 @@
+-define(RB_DEBUG_T(T),erruby_debug:debug_tmp("~s:~p~n",[??T,T])).
