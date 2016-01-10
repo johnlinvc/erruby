@@ -79,7 +79,7 @@ method_succ(#{self := Self}=Env) ->
 yield_in_range(#{self := Self} = Env,Range) ->
   FoldFun = fun (X, EnvAcc) ->
                 IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
-                #{ret_val := FixInt} = IntEnv,
+                FixInt = erruby_rb:ret_val(IntEnv),
                 erruby_vm:yield(IntEnv, [FixInt]) end,
   LastEnv = lists:foldl(FoldFun, Env, Range),
   LastEnv#{ret_val => Self}.
