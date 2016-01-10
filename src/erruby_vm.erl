@@ -1,4 +1,5 @@
 -module(erruby_vm).
+-include("rb.hrl").
 -export([eval_ast/1, scanl/3]).
 -export([new_nil/1, new_string/2]).
 -export([eval_method_with_exit/5, yield/2]).
@@ -142,21 +143,24 @@ eval_ast({ast, type, class, children,
 %TODO figure out the Unknown field in AST
 %TODO add multi layer CONST def
 eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
-  erruby_debug:debug_tmp("assigning const:~p~n unknown:~p~nValAst:~p~n",[Name, Unknown, ValAst]),
   NewEnv = eval_ast(ValAst, Env),
   #{ret_val := Val} = NewEnv,
   erruby_object:def_const(Self, Name, Val),
   NewEnv;
 
-%TODO figure out the Unknown field in AST
-%TODO add multi layer CONST find
 %TODO throw error when not_found
-eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
-  erruby_debug:debug_tmp("finding const:~p~n unknown:~p~n",[Name, Unknown]),
-  NestedConst = erruby_object:find_const(Self, Name),
-  Const = case NestedConst of
+eval_ast({ast, type, const, children, [ParentConstAst, Name]}, Env) ->
+  ParentConstEnv = case ParentConstAst of
+                  undefined ->
+                       erruby_rb:ret_self(Env);
+                  {ast, type, const, children, _} ->
+                       eval_ast(ParentConstAst, Env)
+                   end,
+  #{ret_val := ParentConst} = ParentConstEnv,
+  LocalConst = erruby_object:find_const(ParentConst, Name),
+  Const = case LocalConst of
             not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
-            _ -> NestedConst
+            _ -> LocalConst
           end,
   Env#{ret_val => Const};
 
