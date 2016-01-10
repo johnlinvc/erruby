@@ -23,8 +23,8 @@ install_method(TC, FC, Name, Func) ->
   erruby_object:def_method(TC, Name, Func),
   erruby_object:def_method(FC, Name, Func).
 
-new_true(Env) -> Env#{ret_val => true_instance()}.
-new_false(Env) -> Env#{ret_val => false_instance()}.
+new_true(Env) -> erruby_rb:return(true_instance(), Env).
+new_false(Env) -> erruby_rb:return(false_instance(), Env).
 
 true_instance() ->
   whereis(erruby_boolean_true).
@@ -39,12 +39,12 @@ method_not(#{self := Self} = Env) ->
     True -> False;
     False -> True
   end,
-  Env#{ret_val => RetVal}.
+  erruby_rb:return(RetVal, Env).
 
 method_and(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   RetVal = and_op(Self, Another),
-  Env#{ret_val => RetVal}.
+  erruby_rb:return(RetVal, Env).
 
 object_to_boolean(Object) ->
   NilObject = erruby_nil:nil_instance(),
@@ -83,14 +83,14 @@ not_op(Boolean) ->
 method_or(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   RetVal = or_op(Self, Another),
-  Env#{ret_val => RetVal}.
+  erruby_rb:return(RetVal, Env).
 
 method_xor(#{self := Self} = Env, Object) ->
   Another = object_to_boolean(Object),
   NotAandB = and_op(not_op(Self),Another),
   AandNotB = and_op(Self, not_op(Another)),
   RetVal = or_op(NotAandB, AandNotB),
-  Env#{ret_val => RetVal}.
+  erruby_rb:return(RetVal, Env).
 
 method_true_to_s(Env) ->
   erruby_vm:new_string("true", Env).
