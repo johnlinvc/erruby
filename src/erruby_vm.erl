@@ -106,9 +106,13 @@ eval_ast({ast, type, class, children,
            NewClass;
       _ -> ClassConst
     end,
-  NewFrame = new_frame(NameEnv, Class),
-  ResultFrame = eval_ast(Body,NewFrame),
-  pop_frame(ResultFrame);
+  case Body of
+    undefined -> NameEnv;
+    _ ->
+      NewFrame = new_frame(NameEnv, Class),
+      ResultFrame = eval_ast(Body,NewFrame),
+      pop_frame(ResultFrame)
+  end;
 
 %TODO refactor with the one without SupperClass
 eval_ast({ast, type, class, children,
@@ -138,6 +142,7 @@ eval_ast({ast, type, class, children,
 %TODO figure out the Unknown field in AST
 %TODO add multi layer CONST def
 eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ self := Self } = Env) ->
+  erruby_debug:debug_tmp("assigning const:~p~n unknown:~p~nValAst:~p~n",[Name, Unknown, ValAst]),
   NewEnv = eval_ast(ValAst, Env),
   #{ret_val := Val} = NewEnv,
   erruby_object:def_const(Self, Name, Val),
@@ -147,6 +152,7 @@ eval_ast({ast, type, casgn, children, [Unknown, Name, ValAst] = Children}, #{ se
 %TODO add multi layer CONST find
 %TODO throw error when not_found
 eval_ast({ast, type, const, children, [Unknown, Name] = Children}, #{ self := Self } = Env) ->
+  erruby_debug:debug_tmp("finding const:~p~n unknown:~p~n",[Name, Unknown]),
   NestedConst = erruby_object:find_const(Self, Name),
   Const = case NestedConst of
             not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
