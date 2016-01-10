@@ -39,7 +39,7 @@ eval_ast({ast, type, false, children, []}, Env) ->
 
 eval_ast({ast, type, array, children, Args}, Env) ->
   [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
+  EvaledArgs = lists:map( fun erruby_rb:ret_val/1, Envs),
   LastEnv = lists:last(Envs),
   erruby_array:new_array(LastEnv, EvaledArgs);
 
@@ -52,9 +52,9 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   [print_ast(Ast) || Ast <- Children],
   [Receiver | [Msg | Args]] = Children,
   ReceiverFrame = receiver_or_self(Receiver, Env),
-  #{ ret_val := Target} = ReceiverFrame,
+  Target = erruby_rb:ret_val(ReceiverFrame),
   [_ |Envs] = scanl(fun eval_ast/2, ReceiverFrame, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
+  EvaledArgs = lists:map( fun erruby_rb:ret_val/1, Envs),
   LastEnv = case Envs of
               [] -> ReceiverFrame;
               _ -> lists:last(Envs)
@@ -70,7 +70,7 @@ eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= _Children}, En
 
 eval_ast({ast, type, yield, children, Args}, Env) ->
   [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
+  EvaledArgs = lists:map( fun erruby_rb:ret_val/1, Envs),
   LastEnv = case Envs of
               [] -> Env;
               _ -> lists:last(Envs)
