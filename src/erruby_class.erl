@@ -19,7 +19,7 @@ install_class_class_methods() ->
 %FIXME new a real class
 method_new(#{self := Klass}=Env) ->
   {ok, NewObject} = erruby_object:start_link(Klass),
-  Env#{ret_val => NewObject}.
+  erruby_rb:return(NewObject, Env).
 
 %TODO lazy init
 init_class_class() ->
