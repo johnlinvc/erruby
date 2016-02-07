@@ -166,7 +166,7 @@ method_puts(Env, String) ->
   erruby_nil:new_nil(Env).
 
 method_self(#{self := Self}=Env) ->
-  Env#{ret_val => Self}.
+  erruby_rb:return(Self, Env).
 
 method_inspect(#{self := Self}=Env) ->
   S = io_lib:format("#<Object:~p>",[Self]),

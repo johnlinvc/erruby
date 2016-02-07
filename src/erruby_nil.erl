@@ -13,7 +13,8 @@ install_nil_class() ->
   erruby_object:new_object_with_pid_symbol(erruby_nil, NilClass),
   ok.
 
-new_nil(Env) -> Env#{ret_val => nil_instance()}.
+new_nil(Env) ->
+  erruby_rb:return(nil_instance(), Env).
 
 nil_instance() -> whereis(erruby_nil).
 

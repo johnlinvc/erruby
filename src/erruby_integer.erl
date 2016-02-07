@@ -24,7 +24,7 @@ install_integer_class() ->
   erruby_object:def_method(IntegerClass, 'downto', fun method_downto/2),
   ok.
 
-method_to_i(#{self := Self}=Env) -> Env#{ret_val => Self}.
+method_to_i(#{self := Self}=Env) -> erruby_rb:return(Self, Env).
 
 method_denominator(Env) ->
   erruby_fixnum:new_fixnum(Env, 1).
@@ -79,10 +79,10 @@ method_succ(#{self := Self}=Env) ->
 yield_in_range(#{self := Self} = Env,Range) ->
   FoldFun = fun (X, EnvAcc) ->
                 IntEnv = erruby_fixnum:new_fixnum(EnvAcc, X),
-                #{ret_val := FixInt} = IntEnv,
+                FixInt = erruby_rb:ret_val(IntEnv),
                 erruby_vm:yield(IntEnv, [FixInt]) end,
   LastEnv = lists:foldl(FoldFun, Env, Range),
-  LastEnv#{ret_val => Self}.
+  erruby_rb:return(Self, LastEnv).
 
 times_range(X) when X =< 0 -> [];
 times_range(X) -> lists:seq(0, X-1).

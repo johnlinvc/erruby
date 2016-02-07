@@ -22,7 +22,7 @@ eval_ast({ast,type,'begin',children, Children}, Env) ->
 
 eval_ast({ast, type, self, children, []}, Env) ->
   #{ self := Self } = Env,
-  Env#{ret_val => Self};
+  erruby_rb:return(Self, Env);
 
 eval_ast({ast, type, str, children, Children}, Env) ->
   [SBin|_T] = Children,
@@ -38,9 +38,7 @@ eval_ast({ast, type, false, children, []}, Env) ->
   erruby_boolean:new_false(Env);
 
 eval_ast({ast, type, array, children, Args}, Env) ->
-  [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
-  LastEnv = lists:last(Envs),
+  {EvaledArgs, LastEnv} = eval_args(Args, Env),
   erruby_array:new_array(LastEnv, EvaledArgs);
 
 eval_ast({ast, type, int, children, [N]}, Env) ->
@@ -52,13 +50,8 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   [print_ast(Ast) || Ast <- Children],
   [Receiver | [Msg | Args]] = Children,
   ReceiverFrame = receiver_or_self(Receiver, Env),
-  #{ ret_val := Target} = ReceiverFrame,
-  [_ |Envs] = scanl(fun eval_ast/2, ReceiverFrame, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
-  LastEnv = case Envs of
-              [] -> ReceiverFrame;
-              _ -> lists:last(Envs)
-            end,
+  Target = erruby_rb:ret_val(ReceiverFrame),
+  {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
   Method = erruby_object:find_instance_method(Target, Msg),
   process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
@@ -69,24 +62,19 @@ eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= _Children}, En
   Result#{block => not_exist};
 
 eval_ast({ast, type, yield, children, Args}, Env) ->
-  [_ |Envs] = scanl(fun eval_ast/2, Env, Args),
-  EvaledArgs = lists:map( fun (T) -> #{ ret_val := R } = T, R end, Envs),
-  LastEnv = case Envs of
-              [] -> Env;
-              _ -> lists:last(Envs)
-            end,
+  {EvaledArgs, LastEnv} = eval_args(Args, Env),
   yield(LastEnv, EvaledArgs);
 
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
   NewEnv = eval_ast(ValAst, Env),
-  #{ret_val := RetVal } = NewEnv,
+  RetVal = erruby_rb:ret_val(NewEnv),
   bind_lvar(Name, RetVal, NewEnv);
 
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
-  Env#{ ret_val => Val};
+  erruby_rb:return(Val, Env);
 
 eval_ast({ast, type, def, children, Children}, Env) ->
   [Name | [ {ast, type, args, children, Args} , Body ] ] = Children,
@@ -100,7 +88,7 @@ eval_ast({ast, type, class, children,
           [NameAst,undefined,Body] = _Children}, #{ self := Self } = Env) ->
   {_,_,const,_,[_,Name]} = NameAst,
   NameEnv = eval_ast(NameAst,Env),
-  #{ret_val := ClassConst} = NameEnv,
+  ClassConst = erruby_rb:ret_val(NameEnv),
   Class = case ClassConst of
     not_found -> {ok, NewClass} = erruby_class:new_class(),
            erruby_object:def_const(Self, Name, NewClass),
@@ -120,9 +108,9 @@ eval_ast({ast, type, class, children,
           [NameAst,SuperClassAst,Body] = _Children}, #{ self := Self } = Env) ->
   {_,_,const,_,[_,Name]} = NameAst,
   NameEnv = eval_ast(NameAst,Env),
-  #{ret_val := ClassConst} = NameEnv,
+  ClassConst = erruby_rb:ret_val(NameEnv),
   SuperClassEnv = eval_ast(SuperClassAst,NameEnv),
-  #{ret_val := SuperClassConst} = SuperClassEnv,
+  SuperClassConst = erruby_rb:ret_val(SuperClassEnv),
   %TODO should fail when SuperClassConst is not defined
   Class = case ClassConst of
             not_found -> {ok, NewClass} = erruby_class:new_class(SuperClassConst),
@@ -142,22 +130,22 @@ eval_ast({ast, type, class, children,
 
 eval_ast({ast, type, casgn, children, [ParentConstAst, Name, ValAst] }, Env) ->
   ParentConstEnv = parent_const_env(ParentConstAst, Env),
-  #{ret_val := ParentConst} = ParentConstEnv,
+  ParentConst = erruby_rb:ret_val(ParentConstEnv),
   NewEnv = eval_ast(ValAst, ParentConstEnv),
-  #{ret_val := Val} = NewEnv,
+  Val = erruby_rb:ret_val(NewEnv),
   erruby_object:def_const(ParentConst, Name, Val),
   NewEnv;
 
 %TODO throw error when not_found
 eval_ast({ast, type, const, children, [ParentConstAst, Name]}, Env) ->
   ParentConstEnv = parent_const_env(ParentConstAst, Env),
-  #{ret_val := ParentConst} = ParentConstEnv,
+  ParentConst = erruby_rb:ret_val(ParentConstEnv),
   LocalConst = erruby_object:find_const(ParentConst, Name),
   Const = case LocalConst of
             not_found -> erruby_object:find_const(erruby_object:object_class(), Name);
             _ -> LocalConst
           end,
-  Env#{ret_val => Const};
+  erruby_rb:return(Const, Env);
 
 
 eval_ast(Ast, Env) ->
@@ -204,7 +192,7 @@ bind_lvar(Name, Val, #{ lvars := LVars } = Env) ->
 
 receiver_or_self(undefined, Env) ->
   #{ self := Self } = Env,
-  Env#{ret_val => Self};
+  erruby_rb:return(Self, Env);
 receiver_or_self(Receiver, Env) ->
   eval_ast(Receiver,Env).
 
@@ -213,10 +201,10 @@ eval_ast(Ast) ->
   eval_ast(Ast, Env).
 
 new_string(String, Env) ->
-  Env#{ret_val => String}.
+  erruby_rb:return(String, Env).
 
 new_symbol(Symbol, Env) ->
-  Env#{ret_val => Symbol}.
+  erruby_rb:return(Symbol, Env).
 
 new_frame(Env, Self) ->
   Env#{lvars => #{}, ret_val => not_exist, self => Self, prev_frame => Env}.
@@ -242,6 +230,16 @@ parent_const_env(ParentConstAst, Env) ->
     {ast, type, const, children, _} -> eval_ast(ParentConstAst, Env)
   end.
 
+eval_args(ArgAsts, Env) ->
+  [_ |Envs] = scanl(fun eval_ast/2, Env, ArgAsts),
+  EvaledArgs = lists:map( fun erruby_rb:ret_val/1, Envs),
+  LastEnv = case Envs of
+              [] -> Env;
+              _ -> lists:last(Envs)
+            end,
+  {EvaledArgs, LastEnv}.
+
+
 yield(Env, Args)->
   Block = find_block(Env),
   #{body := Body, args := {ast, type, args, children, ArgNamesAst}} = Block,
@@ -253,7 +251,7 @@ yield(Env, Args)->
 
 pop_frame(Frame) ->
   #{ret_val := RetVal, prev_frame := PrevFrame} = Frame,
-  PrevFrame#{ret_val := RetVal}.
+  erruby_rb:return(RetVal, PrevFrame).
 
 default_env() ->
   {ok, _ObjectClass} = erruby_object:init_object_class(),
