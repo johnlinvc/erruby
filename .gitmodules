@@ -1,0 +1,6 @@
+[submodule "ext/ruby/spec"]
+	path = ext/ruby/spec
+	url = https://github.com/ruby/spec.git
+[submodule "ext/ruby/mspec"]
+	path = ext/ruby/mspec
+	url = https://github.com/ruby/mspec.git
