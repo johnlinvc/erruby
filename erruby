@@ -1,2 +1,5 @@
 #!/bin/bash
-escript ebin/erruby.beam $*
+pushd `dirname $0` > /dev/null
+ERRUBY_PATH=`pwd`
+popd > /dev/null
+escript "${ERRUBY_PATH}/ebin/erruby.beam" $*

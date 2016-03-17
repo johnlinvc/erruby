@@ -48,16 +48,24 @@ show_help() ->
 
 
 install_encoder(Ruby) ->
-  ruby:call(Ruby, './rb_src/erruby.rb', 'install_encoder',[]).
+  ruby:call(Ruby, erruby_rb_path() , 'install_encoder',[]).
 
+erruby_path() ->
+  filename:dirname(escript:script_name()).
+
+relative_path(Path) ->
+  erruby_path() ++ Path.
+
+erruby_rb_path() ->
+  list_to_atom(relative_path("/../rb_src/erruby.rb")).
 
 parse_ast(Ruby, String) ->
-  ruby:call(Ruby, './rb_src/erruby.rb','parse', [String]).
+  ruby:call(Ruby, erruby_rb_path(),'parse', [String]).
 
 add_lib_path() ->
-  code:add_path("./deps/erlport/ebin"),
-  code:add_path("./deps/getopt/ebin"),
-  code:add_path("./ebin").
+  code:add_path(relative_path("/../deps/erlport/ebin")),
+  code:add_path(relative_path("/../deps/getopt/ebin")),
+  code:add_path(erruby_path()).
 
 stop_ruby(Ruby) ->
   ruby:stop(Ruby).
