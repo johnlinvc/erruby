@@ -4,6 +4,7 @@
 opt_spec_list() ->
   [
    {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"},
+   {verbose, $v, "verbose", undefined, "print version number and enter verbose mode"},
    {help, $h, "help", undefined, "Show this help"}
   ].
 
@@ -11,6 +12,9 @@ handle_opts({debug, DebugLevel}) ->
   erruby_debug:set_debug_level(DebugLevel);
 handle_opts(help ) ->
   show_help();
+handle_opts(verbose) ->
+  io:format("erruby 0.1.0~n"),
+  erruby_debug:set_debug_level(2);
 handle_opts(_Opts) ->
   ok.
 
