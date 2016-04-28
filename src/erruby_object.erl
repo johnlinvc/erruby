@@ -165,6 +165,31 @@ method_puts(Env, String) ->
   io:format("~s~n", [String]),
   erruby_nil:new_nil(Env).
 
+append_rb_extension(FileName) ->
+  case filename:extension(FileName) of
+    [] -> string:concat(FileName, ".rb");
+    _ -> FileName
+  end.
+
+%TODO extract to Kernal
+%TODO add filename to loaded feature
+%TODO raise error if file not found
+%TODO return false if already loaded
+method_require_relative(Env, FileName) ->
+  erruby_debug:print_env(Env),
+  SrcFile = erruby_vm:file_name(Env),
+  SrcDir = filename:dirname(SrcFile),
+  RelativeFileName = filename:join([SrcDir, FileName]),
+  RelativeFileNameWithExt = append_rb_extension(RelativeFileName),
+  try
+    erruby:eruby(RelativeFileNameWithExt),
+    erruby_boolean:new_true(Env)
+  catch
+    _:_E ->
+      erruby_debug:debug_2("cant require_relative file ~p~n", [RelativeFileNameWithExt]),
+      erruby_boolean:new_false(Env)
+  end.
+
 method_self(#{self := Self}=Env) ->
   erruby_rb:return(Self, Env).
 
@@ -183,14 +208,19 @@ new_object_with_pid_symbol(Symbol, Class) ->
 new_object(Class, Payload) when is_map(Payload) ->
   start_link(Class, Payload).
 
-
 init_object_class() ->
+  erb:find_or_init_class(erruby_object_class, fun init_object_class_internal/0).
+
+init_object_class_internal() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
   install_object_class_methods(),
   'Object' = def_const(Pid, 'Object', Pid),
   {ok, Pid}.
 
 init_main_object() ->
+  erb:find_or_init_class(erruby_main_object, fun init_main_object_internal/0).
+
+init_main_object_internal() ->
   new_object_with_pid_symbol(erruby_main_object, object_class()).
 
 object_class() ->
@@ -207,6 +237,7 @@ install_object_class_methods() ->
   def_method(object_class(), 'inspect', fun method_inspect/1),
   def_method(object_class(), 'to_s', fun method_to_s/1),
   def_method(object_class(), '==', fun method_eq/2),
+  def_method(object_class(), 'require_relative', fun method_require_relative/2),
   ok.
 
 

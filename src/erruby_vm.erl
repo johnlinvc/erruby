@@ -1,8 +1,9 @@
 -module(erruby_vm).
 -include("rb.hrl").
--export([eval_ast/1, scanl/3]).
+-export([eval_file/2, scanl/3]).
 -export([new_nil/1, new_string/2]).
 -export([eval_method_with_exit/5, yield/2]).
+-export([file_name/1]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -15,6 +16,21 @@ scanl(_F, Acc, []) ->
 scanl(F, Acc0, [H | T]) ->
   Acc = apply(F, [H, Acc0]),
   [Acc0 | scanl(F, Acc, T)].
+
+eval_file(Ast, FileName) ->
+  DefaultEnv = default_env(),
+  Env = set_filename(DefaultEnv, FileName),
+  eval_ast(Ast, Env).
+
+set_filename(Env, FileName) ->
+  Env#{'FileName' => FileName}.
+
+file_name(Env) ->
+  case maps:find('FileName', Env) of
+    {ok, Value} -> Value;
+    error ->
+      file_name(find_prev_frame(Env))
+  end.
 
 eval_ast({ast,type,'begin',children, Children}, Env) ->
   erruby_debug:debug_2("eval begin~n",[]),
@@ -196,9 +212,6 @@ receiver_or_self(undefined, Env) ->
 receiver_or_self(Receiver, Env) ->
   eval_ast(Receiver,Env).
 
-eval_ast(Ast) ->
-  Env = default_env(),
-  eval_ast(Ast, Env).
 
 new_string(String, Env) ->
   erruby_rb:return(String, Env).
@@ -212,6 +225,7 @@ new_frame(Env, Self) ->
 new_nil(Env) ->
   erruby_nil:new_nil(Env).
 
+%TODO move to another place
 find_prev_frame(Env) ->
   case maps:get(prev_frame, Env, no_prev_frame) of
     no_prev_frame -> throw(cant_find_block);

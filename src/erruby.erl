@@ -40,8 +40,7 @@ eruby(SrcFileName) ->
   Ruby = start_ruby(),
   Ast = parse_ast(Ruby, FileLines),
   stop_ruby(Ruby),
-  erruby_vm:eval_ast(Ast).
-
+  erruby_vm:eval_file(Ast, SrcFileName).
 
 getopt(Args) ->
   getopt:parse(opt_spec_list(), Args).

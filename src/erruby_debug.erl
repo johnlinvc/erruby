@@ -1,6 +1,7 @@
 -module(erruby_debug).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 -export([start_link/1, debug/3, debug_1/2,debug_2/2, debug_tmp/2, set_debug_level/1]).
+-export([print_env/1]).
 
 init([DebugLevel]) ->
   {ok, #{debug_level => DebugLevel}}.
@@ -50,3 +51,6 @@ handle_cast(_Req, State) ->
   io:format("handle unknown cast ~p ~p ~n",[_Req, State]),
   NewState = State,
   {noreply, NewState}.
+
+print_env(Env) ->
+  debug_1("Env: ~p ~n",[Env]).
