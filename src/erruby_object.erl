@@ -1,8 +1,10 @@
 -module(erruby_object).
+-include("rb.hrl").
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 %for vm
 -export([def_method/4, find_instance_method/2, def_global_const/2, find_global_const/1, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_global_var/2, find_global_var/1]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2, new_object/2]).
 -export([init_main_object/0, main_object/0]).
@@ -84,6 +86,14 @@ def_global_const(Name, Value) ->
 find_global_const(Name) ->
   find_const(object_class(), Name).
 
+%TODO define on basic object instead
+%TODO ability to use custom getter/setter
+def_global_var(Name, Value) ->
+  Msg = #{type => def_global_var, name => Name, value => Value},
+  gen_server:call(object_class(), Msg).
+
+find_global_var(Name) ->
+  gen_server:call(object_class(), #{type => find_global_var, name => Name}).
 
 def_const(Self, Name, Value) ->
   Receiver = self_or_object_class(Self),
@@ -133,7 +143,7 @@ handle_call(#{ type := get_properties }, _From, #{properties := Properties}=Stat
 
 handle_call(#{ type := set_properties, properties := Properties }, _From, State) ->
   NewState = State#{ properties := Properties},
-  {reply, NewState, State};
+  {reply, NewState, NewState};
 
 handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{consts := Consts}=State) ->
   NewConsts = Consts#{Name => Value},
@@ -145,13 +155,27 @@ handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=St
   Value = maps:get(Name, Consts, not_found),
   {reply, Value, State};
 
+handle_call(#{ type := def_global_var, name := Name, value := Value}, _From,
+            #{properties := #{global_var_tbl := GVarTbl} } = State) ->
+  NewGVarTbl = GVarTbl#{ Name => Value},
+  #{properties := Properties} = State,
+  NewProperties = Properties#{ global_var_tbl := NewGVarTbl },
+  NewState = State#{ properties :=  NewProperties},
+  {reply, Name, NewState};
+
+handle_call(#{ type := find_global_var, name := Name}, _From,
+            #{properties := #{global_var_tbl := GVarTbl} } = State) ->
+  Value = maps:get(Name, GVarTbl, not_found),
+  {reply, Value, State};
+
+
 handle_call(#{ type := get_class}, _From, State) ->
   Value = maps:get(class, State, object_class()),
   {reply, Value, State};
 
 
 handle_call(_Req, _From, State) ->
-  io:format("handle unknow call ~p ~p ~p ~n",[_Req, _From, State]),
+  io:format("handle unknow call ~p ~n ~p ~n ~p ~n",[_Req, _From, State]),
   NewState = State,
   {reply, done, NewState}.
 
@@ -215,6 +239,7 @@ init_object_class_internal() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
   install_object_class_methods(),
   'Object' = def_const(Pid, 'Object', Pid),
+  set_properties(object_class(), #{global_var_tbl => #{}}),
   {ok, Pid}.
 
 init_main_object() ->

@@ -81,6 +81,7 @@ eval_ast({ast, type, yield, children, Args}, Env) ->
   {EvaledArgs, LastEnv} = eval_args(Args, Env),
   yield(LastEnv, EvaledArgs);
 
+%FIXME return the value
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
   NewEnv = eval_ast(ValAst, Env),
@@ -90,6 +91,17 @@ eval_ast({ast, type, lvasgn, children, Children}, Env) ->
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
+  erruby_rb:return(Val, Env);
+
+eval_ast({ast, type, gvasgn, children, Children}, Env) ->
+  [Name, ValAst] = Children,
+  NewEnv = eval_ast(ValAst, Env),
+  RetVal = erruby_rb:ret_val(NewEnv),
+  erruby_object:def_global_var(Name, RetVal),
+  erruby_rb:return(Name, NewEnv);
+
+eval_ast({ast, type, gvar, children, [Name]}, Env) ->
+  Val = erruby_object:find_global_var(Name),
   erruby_rb:return(Val, Env);
 
 eval_ast({ast, type, def, children, Children}, Env) ->
