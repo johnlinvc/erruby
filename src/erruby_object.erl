@@ -196,15 +196,27 @@ append_rb_extension(FileName) ->
   end.
 
 %TODO extract to Kernal
-%TODO add filename to loaded feature
 %TODO raise error if file not found
-%TODO return false if already loaded
 method_require_relative(Env, FileName) ->
-  erruby_debug:print_env(Env),
+  RelativeFileName = relativeFileName(Env, FileName),
+  RelativeFileNameWithExt = append_rb_extension(RelativeFileName),
+  LoadedFeatures = find_global_var("$LOADED_FEATURES"),
+  LoadedFeaturesList = erruby_array:array_to_list(LoadedFeatures),
+  Contains = lists:member( RelativeFileNameWithExt, LoadedFeaturesList),
+  case Contains of
+    true -> erruby_boolean:new_false(Env);
+    _ ->
+      load_file(Env, RelativeFileNameWithExt),
+      erruby_array:push(LoadedFeatures, RelativeFileNameWithExt),
+      erruby_boolean:new_true(Env)
+  end.
+
+relativeFileName(Env, FileName) ->
   SrcFile = erruby_vm:file_name(Env),
   SrcDir = filename:dirname(SrcFile),
-  RelativeFileName = filename:join([SrcDir, FileName]),
-  RelativeFileNameWithExt = append_rb_extension(RelativeFileName),
+  filename:join([SrcDir, FileName]).
+
+load_file(Env, RelativeFileNameWithExt) ->
   try
     erruby:eruby(RelativeFileNameWithExt),
     erruby_boolean:new_true(Env)
@@ -240,6 +252,7 @@ init_object_class_internal() ->
   install_object_class_methods(),
   'Object' = def_const(Pid, 'Object', Pid),
   set_properties(object_class(), #{global_var_tbl => #{}}),
+  def_global_var("$LOADED_FEATURES", erruby_array:new_array([])),
   {ok, Pid}.
 
 init_main_object() ->
