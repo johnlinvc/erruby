@@ -227,6 +227,7 @@ load_file(Env, RelativeFileNameWithExt) ->
   end.
 
 %TODO raise error if file not found
+% @TODO find a better way to get filename
 method_load(Env, FileName)->
   Pwd = os:getenv("PWD"),
   RelativeFileNameWithExt = filename:join([Pwd, FileName]),
