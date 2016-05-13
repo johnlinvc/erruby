@@ -226,6 +226,12 @@ load_file(Env, RelativeFileNameWithExt) ->
       erruby_boolean:new_false(Env)
   end.
 
+%TODO raise error if file not found
+method_load(Env, FileName)->
+  Pwd = os:getenv("PWD"),
+  RelativeFileNameWithExt = filename:join([Pwd, FileName]),
+  load_file(Env, RelativeFileNameWithExt).
+
 method_self(#{self := Self}=Env) ->
   erruby_rb:return(Self, Env).
 
@@ -276,6 +282,7 @@ install_object_class_methods() ->
   def_method(object_class(), 'to_s', fun method_to_s/1),
   def_method(object_class(), '==', fun method_eq/2),
   def_method(object_class(), 'require_relative', fun method_require_relative/2),
+  def_method(object_class(), 'load', fun method_load/2),
   ok.
 
 
