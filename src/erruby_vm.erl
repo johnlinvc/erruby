@@ -1,8 +1,9 @@
 -module(erruby_vm).
 -include("rb.hrl").
--export([eval_ast/1, scanl/3]).
+-export([eval_file/2, scanl/3]).
 -export([new_nil/1, new_string/2]).
 -export([eval_method_with_exit/5, yield/2]).
+-export([file_name/1]).
 
 print_ast(Ast) ->
   erruby_debug:debug_1("Ast: ~p ~n",[Ast]).
@@ -15,6 +16,21 @@ scanl(_F, Acc, []) ->
 scanl(F, Acc0, [H | T]) ->
   Acc = apply(F, [H, Acc0]),
   [Acc0 | scanl(F, Acc, T)].
+
+eval_file(Ast, FileName) ->
+  DefaultEnv = default_env(),
+  Env = set_filename(DefaultEnv, FileName),
+  eval_ast(Ast, Env).
+
+set_filename(Env, FileName) ->
+  Env#{'FileName' => FileName}.
+
+file_name(Env) ->
+  case maps:find('FileName', Env) of
+    {ok, Value} -> Value;
+    error ->
+      file_name(find_prev_frame(Env))
+  end.
 
 eval_ast({ast,type,'begin',children, Children}, Env) ->
   erruby_debug:debug_2("eval begin~n",[]),
@@ -65,6 +81,7 @@ eval_ast({ast, type, yield, children, Args}, Env) ->
   {EvaledArgs, LastEnv} = eval_args(Args, Env),
   yield(LastEnv, EvaledArgs);
 
+%FIXME return the value
 eval_ast({ast, type, lvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
   NewEnv = eval_ast(ValAst, Env),
@@ -74,6 +91,17 @@ eval_ast({ast, type, lvasgn, children, Children}, Env) ->
 eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   erruby_debug:debug_1("searching lvar ~p~n in frame~p~n", [Name, Env]),
   #{ lvars := #{Name := Val}} = Env,
+  erruby_rb:return(Val, Env);
+
+eval_ast({ast, type, gvasgn, children, Children}, Env) ->
+  [Name, ValAst] = Children,
+  NewEnv = eval_ast(ValAst, Env),
+  RetVal = erruby_rb:ret_val(NewEnv),
+  erruby_object:def_global_var(Name, RetVal),
+  erruby_rb:return(Name, NewEnv);
+
+eval_ast({ast, type, gvar, children, [Name]}, Env) ->
+  Val = erruby_object:find_global_var(Name),
   erruby_rb:return(Val, Env);
 
 eval_ast({ast, type, def, children, Children}, Env) ->
@@ -196,9 +224,6 @@ receiver_or_self(undefined, Env) ->
 receiver_or_self(Receiver, Env) ->
   eval_ast(Receiver,Env).
 
-eval_ast(Ast) ->
-  Env = default_env(),
-  eval_ast(Ast, Env).
 
 new_string(String, Env) ->
   erruby_rb:return(String, Env).
@@ -212,6 +237,7 @@ new_frame(Env, Self) ->
 new_nil(Env) ->
   erruby_nil:new_nil(Env).
 
+%TODO move to another place
 find_prev_frame(Env) ->
   case maps:get(prev_frame, Env, no_prev_frame) of
     no_prev_frame -> throw(cant_find_block);

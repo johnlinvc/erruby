@@ -1,8 +1,10 @@
 -module(erruby_object).
+-include("rb.hrl").
 -behavior(gen_server).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 %for vm
 -export([def_method/4, find_instance_method/2, def_global_const/2, find_global_const/1, def_const/3, find_const/2, init_object_class/0,object_class/0]).
+-export([def_global_var/2, find_global_var/1]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2, new_object/2]).
 -export([init_main_object/0, main_object/0]).
@@ -84,6 +86,14 @@ def_global_const(Name, Value) ->
 find_global_const(Name) ->
   find_const(object_class(), Name).
 
+%TODO define on basic object instead
+%TODO ability to use custom getter/setter
+def_global_var(Name, Value) ->
+  Msg = #{type => def_global_var, name => Name, value => Value},
+  gen_server:call(object_class(), Msg).
+
+find_global_var(Name) ->
+  gen_server:call(object_class(), #{type => find_global_var, name => Name}).
 
 def_const(Self, Name, Value) ->
   Receiver = self_or_object_class(Self),
@@ -133,7 +143,7 @@ handle_call(#{ type := get_properties }, _From, #{properties := Properties}=Stat
 
 handle_call(#{ type := set_properties, properties := Properties }, _From, State) ->
   NewState = State#{ properties := Properties},
-  {reply, NewState, State};
+  {reply, NewState, NewState};
 
 handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{consts := Consts}=State) ->
   NewConsts = Consts#{Name => Value},
@@ -145,13 +155,27 @@ handle_call(#{ type := find_const, name := Name }, _From, #{consts := Consts}=St
   Value = maps:get(Name, Consts, not_found),
   {reply, Value, State};
 
+handle_call(#{ type := def_global_var, name := Name, value := Value}, _From,
+            #{properties := #{global_var_tbl := GVarTbl} } = State) ->
+  NewGVarTbl = GVarTbl#{ Name => Value},
+  #{properties := Properties} = State,
+  NewProperties = Properties#{ global_var_tbl := NewGVarTbl },
+  NewState = State#{ properties :=  NewProperties},
+  {reply, Name, NewState};
+
+handle_call(#{ type := find_global_var, name := Name}, _From,
+            #{properties := #{global_var_tbl := GVarTbl} } = State) ->
+  Value = maps:get(Name, GVarTbl, not_found),
+  {reply, Value, State};
+
+
 handle_call(#{ type := get_class}, _From, State) ->
   Value = maps:get(class, State, object_class()),
   {reply, Value, State};
 
 
 handle_call(_Req, _From, State) ->
-  io:format("handle unknow call ~p ~p ~p ~n",[_Req, _From, State]),
+  io:format("handle unknow call ~p ~n ~p ~n ~p ~n",[_Req, _From, State]),
   NewState = State,
   {reply, done, NewState}.
 
@@ -164,6 +188,50 @@ handle_cast(_Req, State) ->
 method_puts(Env, String) ->
   io:format("~s~n", [String]),
   erruby_nil:new_nil(Env).
+
+append_rb_extension(FileName) ->
+  case filename:extension(FileName) of
+    [] -> string:concat(FileName, ".rb");
+    _ -> FileName
+  end.
+
+%TODO extract to Kernal
+%TODO raise error if file not found
+method_require_relative(Env, FileName) ->
+  RelativeFileName = relativeFileName(Env, FileName),
+  RelativeFileNameWithExt = append_rb_extension(RelativeFileName),
+  LoadedFeatures = find_global_var("$LOADED_FEATURES"),
+  LoadedFeaturesList = erruby_array:array_to_list(LoadedFeatures),
+  Contains = lists:member( RelativeFileNameWithExt, LoadedFeaturesList),
+  case Contains of
+    true -> erruby_boolean:new_false(Env);
+    _ ->
+      load_file(Env, RelativeFileNameWithExt),
+      erruby_array:push(LoadedFeatures, RelativeFileNameWithExt),
+      erruby_boolean:new_true(Env)
+  end.
+
+relativeFileName(Env, FileName) ->
+  SrcFile = erruby_vm:file_name(Env),
+  SrcDir = filename:dirname(SrcFile),
+  filename:join([SrcDir, FileName]).
+
+load_file(Env, RelativeFileNameWithExt) ->
+  try
+    erruby:eruby(RelativeFileNameWithExt),
+    erruby_boolean:new_true(Env)
+  catch
+    _:_E ->
+      erruby_debug:debug_2("cant require_relative file ~p~n", [RelativeFileNameWithExt]),
+      erruby_boolean:new_false(Env)
+  end.
+
+%TODO raise error if file not found
+% @TODO find a better way to get filename
+method_load(Env, FileName)->
+  Pwd = os:getenv("PWD"),
+  RelativeFileNameWithExt = filename:join([Pwd, FileName]),
+  load_file(Env, RelativeFileNameWithExt).
 
 method_self(#{self := Self}=Env) ->
   erruby_rb:return(Self, Env).
@@ -183,14 +251,21 @@ new_object_with_pid_symbol(Symbol, Class) ->
 new_object(Class, Payload) when is_map(Payload) ->
   start_link(Class, Payload).
 
-
 init_object_class() ->
+  erb:find_or_init_class(erruby_object_class, fun init_object_class_internal/0).
+
+init_object_class_internal() ->
   {ok, Pid} = gen_server:start_link({local, erruby_object_class}, ?MODULE, [],[]),
   install_object_class_methods(),
   'Object' = def_const(Pid, 'Object', Pid),
+  set_properties(object_class(), #{global_var_tbl => #{}}),
+  def_global_var("$LOADED_FEATURES", erruby_array:new_array([])),
   {ok, Pid}.
 
 init_main_object() ->
+  erb:find_or_init_class(erruby_main_object, fun init_main_object_internal/0).
+
+init_main_object_internal() ->
   new_object_with_pid_symbol(erruby_main_object, object_class()).
 
 object_class() ->
@@ -207,6 +282,8 @@ install_object_class_methods() ->
   def_method(object_class(), 'inspect', fun method_inspect/1),
   def_method(object_class(), 'to_s', fun method_to_s/1),
   def_method(object_class(), '==', fun method_eq/2),
+  def_method(object_class(), 'require_relative', fun method_require_relative/2),
+  def_method(object_class(), 'load', fun method_load/2),
   ok.
 
 

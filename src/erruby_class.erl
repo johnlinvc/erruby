@@ -21,8 +21,10 @@ method_new(#{self := Klass}=Env) ->
   {ok, NewObject} = erruby_object:start_link(Klass),
   erruby_rb:return(NewObject, Env).
 
-%TODO lazy init
 init_class_class() ->
+  erb:find_or_init_class(erruby_class_class, fun init_class_class_internal/0).
+
+init_class_class_internal() ->
   Properties = #{superclass => erruby_object:object_class()},
   {ok, Pid} = erruby_object:new_object_with_pid_symbol(erruby_class_class, erruby_object:object_class()),
   ok = install_class_class_methods(),

@@ -2,6 +2,7 @@
 fail_case = []
 Dir.glob("rb_test/*.rb") do |fn|
   basename = File.basename(fn,'.rb')
+  next if basename.start_with?("_")
   outname = "rb_test/sysrb_out/#{basename}.out"
   system("ruby #{fn} > #{outname}")
   unless system("./erruby #{fn} | diff #{outname} -")
