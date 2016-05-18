@@ -14,7 +14,7 @@ It's still a work in progress. So use it at your own risk.
  
 - erlang vm
 - rebar2
-- ruby
+- ruby (2.2.*)
 
 To install erlang & rebar on OS X, using homebrew
 
@@ -36,10 +36,85 @@ Last, compile ErRuby with:
 	rebar compile
 	
 	
-Test the binary with:
+Test the build result with:
 
-	./erruby rb_test/hello_world.rb
-It should output `hello world`
+	./test.rb
+	
+It should output `everything pass`
+
+
+## Goals
+
+1. Concurrent Features.
+2. Run mspec.
+3. GC.
+
+## Supported features
+
+Currently it support some of the basic ruby constructs.
+
+Supported features:
+
+- `method` defination & calling
+- `class` and inheritance.
+- `block` and `yield`.
+- Constants.
+- Local variables.
+- `load` & `require_relative`
+- `Boolean` & `Integer` with basic mehtods.
+- `String` literal.
+- `Array` literal.
+
+Unsupported core features
+
+- class initializer, instance variables, class instance variables.
+- variadic argument
+- keyword argument
+- GC
+
+### Class & inherentance
+```ruby
+class Foo
+  def to_s
+    "foo"
+  end
+end
+
+class Bar < Foo
+end
+
+class Alice < Bar
+  def to_s
+    "i'm alice"
+  end
+end
+
+puts Foo.new.to_s # "foo"
+puts Bar.new.to_s # "foo"
+puts Alice.new.to_s # "i'm alice"
+```
+
+### block
+```ruby
+def yield_with_arg(s,x)
+  yield s,x
+end
+
+yield_with_arg("yield with","arg") do |ss, xx|
+  puts ss # "yield with"
+  puts xx # "arg"
+end
+
+3.times do |i|
+  puts i.to_s
+  4.times do |j|
+    puts j.to_s
+  end
+end
+
+```
+
+
 ## License
 
 ErRuby is licensed to you under MIT license. See the [COPYING.txt](COPYING.txt) file for more details.

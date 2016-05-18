@@ -8,8 +8,11 @@ class Bar < Foo
 end
 
 class Alice < Bar
+  def to_s
+    "i'm alice"
+  end
 end
 
-puts Foo.new.to_s
-puts Bar.new.to_s
-puts Alice.new.to_s
+puts Foo.new.to_s # "foo"
+puts Bar.new.to_s # "foo"
+puts Alice.new.to_s # "i'm alice"

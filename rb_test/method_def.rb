@@ -18,8 +18,8 @@ def yield_with_arg(s,x)
 end
 
 yield_with_arg("yield with","arg") do |ss, xx|
-  puts ss
-  puts xx
+  puts ss # "yield with"
+  puts xx # "arg"
 end
 
 puts hello_world_method_0
