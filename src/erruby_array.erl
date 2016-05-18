@@ -6,7 +6,16 @@
 install_array_classes() ->
   {ok, ArrayClass} = erruby_class:new_class(),
   'Array' = erruby_object:def_global_const('Array', ArrayClass),
+  erruby_object:def_method(ArrayClass, map, fun method_map/1),
   ok.
+
+method_map(#{self := Self}=Env) ->
+  List = array_to_list(Self),
+  FoldFun = fun(X, EnvAcc) -> erruby_vm:yield(EnvAcc, [X]) end,
+  Envs = erruby_vm:scanl(FoldFun, Env, List),
+  Results = lists:map(fun erruby_rb:ret_val/1, Envs),
+  erruby_rb:return(Results, lists:last(Envs)).
+
 
 %TODO maybe use pid to find class
 new_array(Env, Elements) ->
