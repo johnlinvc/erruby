@@ -20,6 +20,7 @@ install_integer_class() ->
   erruby_object:def_method(IntegerClass, 'succ', fun method_succ/1),
   erruby_object:def_method(IntegerClass, 'next', fun method_succ/1),
   erruby_object:def_method(IntegerClass, 'times', fun method_times/1),
+  erruby_object:def_method(IntegerClass, 'ptimes', fun method_ptimes/1),
   erruby_object:def_method(IntegerClass, 'upto', fun method_upto/2),
   erruby_object:def_method(IntegerClass, 'downto', fun method_downto/2),
   ok.
@@ -84,6 +85,15 @@ yield_in_range(#{self := Self} = Env,Range) ->
   LastEnv = lists:foldl(FoldFun, Env, Range),
   erruby_rb:return(Self, LastEnv).
 
+pyield_in_range(#{self := Self} = Env,Range) ->
+  FoldFun = fun (X) ->
+                IntEnv = erruby_fixnum:new_fixnum(Env, X),
+                FixInt = erruby_rb:ret_val(IntEnv),
+                erruby_vm:yield(IntEnv, [FixInt]) end,
+  Envs = plists:map(FoldFun, Range, {processes, erlang:system_info(schedulers_online)}),
+  LastEnv = lists:last(Envs),
+  erruby_rb:return(Self, LastEnv).
+
 times_range(X) when X =< 0 -> [];
 times_range(X) -> lists:seq(0, X-1).
 
@@ -93,6 +103,11 @@ method_times(#{self := Self}=Env) ->
   Int = erruby_fixnum:fix_to_int(Self),
   Range = times_range(Int),
   yield_in_range(Env,Range).
+
+method_ptimes(#{self := Self}=Env) ->
+  Int = erruby_fixnum:fix_to_int(Self),
+  Range = times_range(Int),
+  pyield_in_range(Env,Range).
 
 upto_range(Start,End) when Start > End -> [];
 upto_range(Start,End) -> lists:seq(Start,End).
