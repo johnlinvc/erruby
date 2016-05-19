@@ -1,4 +1,5 @@
 -module(erruby).
+-include("rb.hrl").
 -export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2, main/1]).
 
 opt_spec_list() ->
@@ -18,7 +19,10 @@ handle_opts(verbose) ->
 handle_opts(_Opts) ->
   ok.
 
-main(Args) ->
+main([ArgsAtom]) ->
+  ArgsString = atom_to_list(ArgsAtom),
+  ArgsUntokened = string:centre(ArgsString,length(ArgsString)-2),
+  Args = string:tokens(ArgsUntokened, " "),
   add_lib_path(),
   erruby_debug:start_link(0),
   {ok, {Opts, Extra}} = getopt(Args),
@@ -54,7 +58,7 @@ install_encoder(Ruby) ->
   ruby:call(Ruby, erruby_rb_path() , 'install_encoder',[]).
 
 erruby_path() ->
-  filename:dirname(escript:script_name()).
+  os:getenv("ERRUBY_PATH") ++ "/ebin".
 
 relative_path(Path) ->
   erruby_path() ++ Path.
