@@ -68,6 +68,7 @@ parse_ast(Ruby, String) ->
 add_lib_path() ->
   code:add_path(relative_path("/../deps/erlport/ebin")),
   code:add_path(relative_path("/../deps/getopt/ebin")),
+  code:add_path(relative_path("/../deps/plists/ebin")),
   code:add_path(erruby_path()).
 
 stop_ruby(Ruby) ->
