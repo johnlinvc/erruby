@@ -93,6 +93,18 @@ eval_ast({ast, type, lvar, children, [Name]}, Env) ->
   #{ lvars := #{Name := Val}} = Env,
   erruby_rb:return(Val, Env);
 
+%FIXME return the value
+eval_ast({ast, type, ivasgn, children, Children}, #{self := Self}=Env) ->
+  [Name, ValAst] = Children,
+  NewEnv = eval_ast(ValAst, Env),
+  RetVal = erruby_rb:ret_val(NewEnv),
+  erruby_object:def_ivar(Self, Name, RetVal),
+  erruby_rb:return(RetVal, Env);
+
+eval_ast({ast, type, ivar, children, [Name]}, #{self := Self}=Env) ->
+  Val = erruby_object:find_ivar(Self, Name),
+  erruby_rb:return(Val, Env);
+
 eval_ast({ast, type, gvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
   NewEnv = eval_ast(ValAst, Env),

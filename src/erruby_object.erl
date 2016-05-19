@@ -7,6 +7,7 @@
 -export([def_global_var/2, find_global_var/1]).
 %for other buildtin class
 -export([def_method/3, new_object_with_pid_symbol/2, new_object/2]).
+-export([def_ivar/3, find_ivar/2]).
 -export([init_main_object/0, main_object/0]).
 -export([start_link/2, start_link/1]).
 -export([get_properties/1, set_properties/2]).
@@ -86,6 +87,7 @@ def_global_const(Name, Value) ->
 find_global_const(Name) ->
   find_const(object_class(), Name).
 
+
 %TODO define on basic object instead
 %TODO ability to use custom getter/setter
 def_global_var(Name, Value) ->
@@ -102,6 +104,13 @@ def_const(Self, Name, Value) ->
 find_const(Self, Name) ->
   erruby_debug:debug_2("finding on ~p for const:~p~n",[Self, Name]),
   gen_server:call(Self, #{type => find_const, name => Name}).
+
+def_ivar(Self, Name, Value)->
+  gen_server:call(Self, #{type => def_ivar, name => Name, value => Value}).
+
+find_ivar(Self, Name) ->
+  erruby_debug:debug_2("finding on ~p for ivar:~p~n",[Self, Name]),
+  gen_server:call(Self, #{type => find_ivar, name => Name}).
 
 get_properties(Self) ->
   gen_server:call(Self, #{type => get_properties}).
@@ -144,6 +153,16 @@ handle_call(#{ type := get_properties }, _From, #{properties := Properties}=Stat
 handle_call(#{ type := set_properties, properties := Properties }, _From, State) ->
   NewState = State#{ properties := Properties},
   {reply, NewState, NewState};
+
+handle_call(#{ type := def_ivar, name := Name, value := Value }, _From, #{ivars := IVars}=State) ->
+  NewIvars = IVars#{Name => Value},
+  NewState = State#{ivars := NewIvars},
+  {reply, Name, NewState};
+
+handle_call(#{ type := find_ivar, name := Name }, _From, #{ivars := IVars}=State) ->
+  erruby_debug:debug_2("finding ivar:~p~nin State:~p~n",[Name, State]),
+  Value = maps:get(Name, IVars, erruby_nil:nil_instance()),
+  {reply, Value, State};
 
 handle_call(#{ type := def_const, name := Name, value := Value }, _From, #{consts := Consts}=State) ->
   NewConsts = Consts#{Name => Value},

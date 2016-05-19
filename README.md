@@ -60,6 +60,7 @@ Supported features:
 - `block` and `yield`.
 - Constants.
 - Local variables.
+- Instance variables.
 - `load` & `require_relative`
 - `Boolean` & `Integer` with basic mehtods.
 - `String` literal.
@@ -67,7 +68,7 @@ Supported features:
 
 Unsupported core features
 
-- class initializer, instance variables, class instance variables.
+- class initializer, class instance variables.
 - variadic argument
 - keyword argument
 - GC
