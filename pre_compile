@@ -2,3 +2,7 @@
 pushd ./deps/erlport > /dev/null
 make > /dev/null
 popd > /dev/null
+
+pushd ./deps/plists > /dev/null
+./make.sh
+popd > /dev/null

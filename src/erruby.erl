@@ -1,10 +1,12 @@
 -module(erruby).
+-include("rb.hrl").
 -export([eruby/1, start_ruby/0, stop_ruby/1, parse_ast/2, main/1]).
 
 opt_spec_list() ->
   [
    {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"},
    {verbose, $v, "verbose", undefined, "print version number and enter verbose mode"},
+   {fast, $f, "fast", undefined, "use escript instead of erl for faster bootup"},
    {help, $h, "help", undefined, "Show this help"}
   ].
 
@@ -18,7 +20,16 @@ handle_opts(verbose) ->
 handle_opts(_Opts) ->
   ok.
 
-main(Args) ->
+parse_args([ArgsAtom]) when is_atom(ArgsAtom) ->
+  ArgsString = atom_to_list(ArgsAtom),
+  ArgsUntokened = string:centre(ArgsString,length(ArgsString)-2),
+  string:tokens(ArgsUntokened, " ");
+
+parse_args(Args) ->
+  Args.
+
+main(RawArgs) ->
+  Args = parse_args(RawArgs),
   add_lib_path(),
   erruby_debug:start_link(0),
   {ok, {Opts, Extra}} = getopt(Args),
@@ -54,7 +65,7 @@ install_encoder(Ruby) ->
   ruby:call(Ruby, erruby_rb_path() , 'install_encoder',[]).
 
 erruby_path() ->
-  filename:dirname(escript:script_name()).
+  os:getenv("ERRUBY_PATH") ++ "/ebin".
 
 relative_path(Path) ->
   erruby_path() ++ Path.
@@ -68,6 +79,7 @@ parse_ast(Ruby, String) ->
 add_lib_path() ->
   code:add_path(relative_path("/../deps/erlport/ebin")),
   code:add_path(relative_path("/../deps/getopt/ebin")),
+  code:add_path(relative_path("/../deps/plists/ebin")),
   code:add_path(erruby_path()).
 
 stop_ruby(Ruby) ->
