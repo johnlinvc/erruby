@@ -7,6 +7,7 @@ install_array_classes() ->
   {ok, ArrayClass} = erruby_class:new_class(),
   'Array' = erruby_object:def_global_const('Array', ArrayClass),
   erruby_object:def_method(ArrayClass, map, fun method_map/1),
+  erruby_object:def_method(ArrayClass, pmap, fun method_pmap/1),
   ok.
 
 method_map(#{self := Self}=Env) ->
@@ -16,6 +17,12 @@ method_map(#{self := Self}=Env) ->
   Results = lists:map(fun erruby_rb:ret_val/1, Envs),
   erruby_rb:return(Results, lists:last(Envs)).
 
+method_pmap(#{self := Self}=Env) ->
+  List = array_to_list(Self),
+  MapFun = fun(X) -> erruby_vm:yield(Env, [X]) end,
+  Envs = plists:map(MapFun, List, {processes, erlang:system_info(schedulers_online)}),
+  Results = lists:map(fun erruby_rb:ret_val/1, Envs),
+  erruby_rb:return(Results, lists:last(Envs)).
 
 %TODO maybe use pid to find class
 new_array(Env, Elements) ->
