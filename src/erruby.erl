@@ -6,6 +6,7 @@ opt_spec_list() ->
   [
    {debug, $d, "debug", {integer, 0}, "Verbose level for debugging"},
    {verbose, $v, "verbose", undefined, "print version number and enter verbose mode"},
+   {fast, $f, "fast", undefined, "use escript instead of erl for faster bootup"},
    {help, $h, "help", undefined, "Show this help"}
   ].
 
@@ -19,10 +20,16 @@ handle_opts(verbose) ->
 handle_opts(_Opts) ->
   ok.
 
-main([ArgsAtom]) ->
+parse_args([ArgsAtom]) when is_atom(ArgsAtom) ->
   ArgsString = atom_to_list(ArgsAtom),
   ArgsUntokened = string:centre(ArgsString,length(ArgsString)-2),
-  Args = string:tokens(ArgsUntokened, " "),
+  string:tokens(ArgsUntokened, " ");
+
+parse_args(Args) ->
+  Args.
+
+main(RawArgs) ->
+  Args = parse_args(RawArgs),
   add_lib_path(),
   erruby_debug:start_link(0),
   {ok, {Opts, Extra}} = getopt(Args),
