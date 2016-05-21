@@ -55,7 +55,7 @@ Currently it support some of the basic ruby constructs.
 
 Supported features:
 
-- `method` defination & calling
+- `method` definition & calling
 - `class` and inheritance.
 - `block` and `yield`.
 - Constants.
@@ -69,8 +69,9 @@ Supported features:
 Unsupported core features
 
 - class initializer, class instance variables.
-- variadic argument
-- keyword argument
+- `module` definition, `include`, `extend`
+- variadic argument in function
+- keyword argument in function
 - GC
 
 ### Class & inherentance
