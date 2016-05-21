@@ -113,6 +113,11 @@ end
   end
 end
 
+([1,2,3]*1000).pmap do |x|
+  x+1
+end
+
+
 ```
 
 
