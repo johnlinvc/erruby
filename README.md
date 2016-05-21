@@ -45,9 +45,10 @@ It should output `everything pass`
 
 ## Goals
 
-1. Concurrent Features.
-2. Run mspec.
-3. GC.
+- Concurrent Features.
+- Run mspec.
+- GC.
+- Friendly installation with rvm/rbenv
 
 ## Supported features
 
