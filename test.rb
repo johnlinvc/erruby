@@ -25,7 +25,7 @@ def run_test(fn, verbose:false)
 end
 
 fail_case = []
-if File.exist?(ARGV[0])
+if ARGV[0] && File.exist?(ARGV[0])
   fn = ARGV[0]
   basename = File.basename(fn,'.rb')
   test_result = run_test(fn, verbose: verbose)

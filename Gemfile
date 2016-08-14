@@ -1,5 +1,4 @@
-#don't specify ruby version because travis ci always use 1.9.3
-#ruby "2.2.3"
+ruby "2.3.0"
 source "https://rubygems.org"
 
 gem 'parser'
