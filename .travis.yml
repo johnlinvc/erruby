@@ -3,6 +3,8 @@ otp_release:
    - 18.0
    - 18.1
 before_script:
+        - rvm install 2.3
+        - rvm use 2.3
         - bundle install
 script:
         - rebar compile && ./test.rb
