@@ -19,3 +19,7 @@ guard 'rebar-compile', all_on_start: true do
   watch(%r{src/.*\.erl})
   watch(%r{test/.*\.erl})
 end
+
+guard :shell do
+  watch(/rb_test\/(.*)\.rb/) {|m| `./test.rb -v #{m[0]}` }
+end
