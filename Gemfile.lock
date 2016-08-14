@@ -32,6 +32,9 @@ GEM
       shellany (~> 0.0)
       thor (>= 0.18.1)
     guard-compat (1.2.1)
+    guard-shell (0.7.1)
+      guard (>= 2.0.0)
+      guard-compat (~> 1.0)
     listen (3.0.3)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
@@ -61,7 +64,8 @@ DEPENDENCIES
   erlport-ast_mapping!
   guard
   guard-rebar!
+  guard-shell
   parser
 
 BUNDLED WITH
-   1.10.6
+   1.11.2
