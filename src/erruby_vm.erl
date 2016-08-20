@@ -67,9 +67,14 @@ eval_ast({ast, type, csend, children, Children}, Env)->
   [Receiver | [Msg | Args]] = Children,
   ReceiverFrame = receiver_or_self(Receiver, Env),
   Target = erruby_rb:ret_val(ReceiverFrame),
-  {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
-  Method = erruby_object:find_instance_method(Target, Msg),
-  process_eval_method(Target,Method, EvaledArgs, LastEnv);
+  Nil = erruby_nil:nil_instance(),
+  case Target of
+    Nil -> Nil;
+    _ ->
+      {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
+      Method = erruby_object:find_instance_method(Target, Msg),
+      process_eval_method(Target,Method, EvaledArgs, LastEnv)
+  end;
 
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
