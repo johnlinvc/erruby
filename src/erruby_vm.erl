@@ -60,6 +60,17 @@ eval_ast({ast, type, array, children, Args}, Env) ->
 eval_ast({ast, type, int, children, [N]}, Env) ->
   erruby_fixnum:new_fixnum(Env, N);
 
+%TODO actually impl csend
+eval_ast({ast, type, csend, children, Children}, Env)->
+  erruby_debug:debug_1("send~n",[]),
+  [print_ast(Ast) || Ast <- Children],
+  [Receiver | [Msg | Args]] = Children,
+  ReceiverFrame = receiver_or_self(Receiver, Env),
+  Target = erruby_rb:ret_val(ReceiverFrame),
+  {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
+  Method = erruby_object:find_instance_method(Target, Msg),
+  process_eval_method(Target,Method, EvaledArgs, LastEnv);
+
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
   erruby_debug:debug_1("send~n",[]),
