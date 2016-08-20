@@ -1,8 +1,7 @@
-ruby "2.3.0"
+ruby "2.3.1"
 source "https://rubygems.org"
 
-gem 'parser'
-gem 'erlport-ast_mapping', github: "johnlinvc/erlport-ast_mapping"
+gem 'erlport-ast_mapping', github: "johnlinvc/erlport-ast_mapping", branch: "ruby_2_3"
 gem 'guard'
 gem 'guard-shell'
 gem 'guard-rebar', github: "johnlinvc/guard-rebar", branch: "feature/update_to_guard_2_13"
