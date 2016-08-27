@@ -58,6 +58,7 @@ get_class(Self) ->
   gen_server:call(Self, #{type => get_class}).
 
 find_instance_method(Self, Name) ->
+  %erruby_debug:debug_tmp("finding instance method ~p in ~p",[ Name, Self]),
   Klass = get_class(Self),
   gen_server:call(Klass, #{type => find_method, name => Name}).
 
