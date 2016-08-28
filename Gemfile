@@ -1,4 +1,4 @@
-ruby "2.3.2"
+ruby "2.3.1"
 source "https://rubygems.org"
 
 gem 'erlport-ast_mapping', github: "johnlinvc/erlport-ast_mapping", branch: "ruby_2_3"
