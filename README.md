@@ -14,7 +14,7 @@ It's still a work in progress. So use it at your own risk.
  
 - erlang vm
 - rebar2
-- ruby (2.2.*)
+- ruby (2.3.1)
 
 To install erlang & rebar on OS X, using homebrew
 
