@@ -1,11 +1,11 @@
 GIT
   remote: git://github.com/johnlinvc/erlport-ast_mapping.git
-  revision: 51bd9ff9b72d30b5a9ed31201bd7b616eb1607d7
+  revision: 3feeb6e8911b28cfd1f8554d8ad66d463738a2d7
   branch: ruby_2_3
   specs:
     erlport-ast_mapping (0.1.0)
       ast
-      parser (~> 2.3)
+      erruby_parser (~> 2.3)
 
 GIT
   remote: git://github.com/johnlinvc/guard-rebar.git
@@ -21,6 +21,8 @@ GEM
   specs:
     ast (2.3.0)
     coderay (1.1.0)
+    erruby_parser (2.3.1.2)
+      ast (~> 2.2)
     ffi (1.9.10)
     formatador (0.2.5)
     guard (2.13.0)
@@ -45,8 +47,6 @@ GEM
     notiffany (0.0.8)
       nenv (~> 0.1)
       shellany (~> 0.0)
-    parser (2.3.1.2)
-      ast (~> 2.2)
     pry (0.10.2)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)

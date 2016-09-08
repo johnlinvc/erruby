@@ -60,21 +60,32 @@ eval_ast({ast, type, array, children, Args}, Env) ->
 eval_ast({ast, type, int, children, [N]}, Env) ->
   erruby_fixnum:new_fixnum(Env, N);
 
-%TODO actually impl csend
 eval_ast({ast, type, csend, children, Children}, Env)->
-  erruby_debug:debug_1("send~n",[]),
+  erruby_debug:debug_1("csend~n",[]),
   [print_ast(Ast) || Ast <- Children],
   [Receiver | [Msg | Args]] = Children,
   ReceiverFrame = receiver_or_self(Receiver, Env),
-  Target = erruby_rb:ret_val(ReceiverFrame),
+  UnresolvedTarget = erruby_rb:ret_val(ReceiverFrame),
+  Target = resolve_future(UnresolvedTarget),
   Nil = erruby_nil:nil_instance(),
   case Target of
     Nil -> Nil;
     _ ->
       {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
       Method = erruby_object:find_instance_method(Target, Msg),
-      process_eval_method(Target,Method, EvaledArgs, LastEnv)
+      eval_method(Target,Method, EvaledArgs, LastEnv)
   end;
+
+eval_ast({ast, type, psend, children, Children}, Env)->
+  erruby_debug:debug_1("psend~n",[]),
+  [print_ast(Ast) || Ast <- Children],
+  [Receiver | [Msg | Args]] = Children,
+  ReceiverFrame = receiver_or_self(Receiver, Env),
+  UnresolvedTarget = erruby_rb:ret_val(ReceiverFrame),
+  Target = resolve_future(UnresolvedTarget),
+  {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
+  Method = erruby_object:find_instance_method(Target, Msg),
+  process_eval_method(Target,Method, EvaledArgs, LastEnv);
 
 %TODO call method using method object
 eval_ast({ast,type,send, children, Children}, Env) ->
@@ -82,10 +93,11 @@ eval_ast({ast,type,send, children, Children}, Env) ->
   [print_ast(Ast) || Ast <- Children],
   [Receiver | [Msg | Args]] = Children,
   ReceiverFrame = receiver_or_self(Receiver, Env),
-  Target = erruby_rb:ret_val(ReceiverFrame),
+  UnresolvedTarget = erruby_rb:ret_val(ReceiverFrame),
+  Target = resolve_future(UnresolvedTarget),
   {EvaledArgs, LastEnv} = eval_args(Args, ReceiverFrame),
   Method = erruby_object:find_instance_method(Target, Msg),
-  process_eval_method(Target,Method, EvaledArgs, LastEnv);
+  eval_method(Target,Method, EvaledArgs, LastEnv);
 
 eval_ast({ast, type, block, children, [Method | [Args | [Body]]]= _Children}, Env) ->
   Block = #{body => Body, args => Args},
@@ -212,15 +224,26 @@ eval_ast(Ast, Env) ->
 
 process_eval_method(Target,Method,Args,Env) ->
   Pid = spawn(?MODULE, eval_method_with_exit, [Target,Method,Args,Env, self()]),
+  erruby_rb:return({future, Pid}, Env).
+
+resolve_future({future, Pid}) ->
   receive
-    {method_result, Pid, Result} ->
-      Result
-  end.
+    {future, Pid, Result} ->
+      print_env(Result),
+      %erruby_debug:debug_tmp("resolve_future future ~p~n", [Result]),
+      self() ! {future, Pid, Result},
+      erruby_rb:ret_val(Result)
+  end;
+
+resolve_future(Any) ->
+  print_env(Any),
+  %erruby_debug:debug_tmp("resolve_future Any ~p~n", [Any]),
+  Any.
 
 eval_method_with_exit(Target,Method,Args,Env, Sender) ->
   try
     Result = eval_method(Target, Method, Args, Env),
-    Respond = {method_result, self(),Result},
+    Respond = {future, self(),Result},
     Sender ! Respond
   catch
     _:E ->
@@ -229,8 +252,9 @@ eval_method_with_exit(Target,Method,Args,Env, Sender) ->
   end,
   exit(normal).
 
-eval_method(Target,Method, Args, Env) when is_function(Method) ->
+eval_method(Target,Method, UnresolvedArgs, Env) when is_function(Method) ->
   NewFrame = new_frame(Env,Target),
+  Args = lists:map(fun resolve_future/1, UnresolvedArgs),
   MethodArgs = [NewFrame | Args],
   ResultFrame = apply(Method, MethodArgs),
   pop_frame(ResultFrame);
