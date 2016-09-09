@@ -9,3 +9,4 @@ puts "mul"
   #a = a + x
 #end
 #puts a
+puts ["a","b","c"].at(1)
