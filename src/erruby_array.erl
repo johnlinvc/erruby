@@ -14,6 +14,7 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, 'first' , fun method_first/1),
   erruby_object:def_method(ArrayClass, 'last' , fun method_last/1),
   erruby_object:def_method(ArrayClass, 'unshift' , fun method_unshift/2),
+  erruby_object:def_method(ArrayClass, 'shift' , fun method_shift/1),
   ok.
 
 method_map(#{self := Self}=Env) ->
@@ -63,6 +64,14 @@ method_unshift(#{self := Self}=Env, Head) ->
   NewProperties = Properties#{ elements := NewElements} ,
   erruby_object:set_properties(Self, NewProperties),
   erruby_rb:return(Self, Env).
+
+method_shift(#{self := Self}=Env) ->
+  Elements = array_to_list(Self),
+  [Head | Rest] = Elements,
+  Properties = erruby_object:get_properties(Self),
+  NewProperties = Properties#{ elements := Rest} ,
+  erruby_object:set_properties(Self, NewProperties),
+  erruby_rb:return(Head, Env).
 
 %TODO maybe use pid to find class
 new_array(Env, Elements) ->
