@@ -53,7 +53,7 @@ new_array(Elements) ->
 at(Array, Index) ->
   Properties = erruby_object:get_properties(Array),
   #{ elements := Elements} = Properties,
-  list:nth(Index+1, Elements).
+  lists:nth(Index+1, Elements).
 
 push(Array, Elem) ->
   Elements = array_to_list(Array),
