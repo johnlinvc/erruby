@@ -12,3 +12,6 @@ puts "mul"
 puts ["a","b","c"].at(1)
 puts ["a","b","c"].first
 puts ["a","b","c"].last
+ary = ["a","b"]
+ary.concat ["c", "d"]
+puts ary.last
