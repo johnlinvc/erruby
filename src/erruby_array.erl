@@ -13,6 +13,7 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, 'at' , fun method_at/2),
   erruby_object:def_method(ArrayClass, 'first' , fun method_first/1),
   erruby_object:def_method(ArrayClass, 'last' , fun method_last/1),
+  erruby_object:def_method(ArrayClass, 'empty?', fun method_empty_q/1),
   ok.
 
 method_map(#{self := Self}=Env) ->
@@ -54,6 +55,13 @@ method_first(#{self := Self}=Env) ->
 method_last(#{self := Self}=Env) ->
   List = array_to_list(Self),
   erruby_rb:return(lists:last(List), Env).
+
+method_empty_q(#{self := Self}=Env) ->
+  List = array_to_list(Self),
+  case  length(List) < 1 of
+    true -> erruby_boolean:new_true(Env);
+    false -> erruby_boolean:new_false(Env)
+  end.
 
 %TODO maybe use pid to find class
 new_array(Env, Elements) ->

@@ -12,3 +12,6 @@ puts "mul"
 puts ["a","b","c"].at(1)
 puts ["a","b","c"].first
 puts ["a","b","c"].last
+
+puts [false].empty?.to_s
+puts [].empty?.to_s
