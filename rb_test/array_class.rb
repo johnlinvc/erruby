@@ -15,3 +15,6 @@ puts ["a","b","c"].last
 ary = ["a","b"]
 ary.concat ["c", "d"]
 puts ary.last
+ary2 = ary + ["e", "f"]
+puts ary2.last
+puts ary.last
