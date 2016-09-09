@@ -10,6 +10,7 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, map, fun method_map/1),
   erruby_object:def_method(ArrayClass, pmap, fun method_pmap/1),
   erruby_object:def_method(ArrayClass, '*' , fun method_multiplication/2),
+  erruby_object:def_method(ArrayClass, 'at' , fun method_at/2),
   ok.
 
 method_map(#{self := Self}=Env) ->
@@ -38,6 +39,10 @@ method_pmap(#{self := Self}=Env) ->
   Envs = plists:map(MapFun, List, {processes, erlang:system_info(schedulers_online)}),
   Results = lists:map(fun erruby_rb:ret_val/1, Envs),
   erruby_rb:return(Results, lists:last(Envs)).
+
+method_at(#{self := Self}=Env, IntObj) ->
+  Int = erruby_fixnum:fix_to_int(IntObj),
+  erruby_rb:return(at(Self, Int), Env).
 
 %TODO maybe use pid to find class
 new_array(Env, Elements) ->
