@@ -22,6 +22,8 @@ install_integer_class() ->
   erruby_object:def_method(IntegerClass, 'times', fun method_times/1),
   erruby_object:def_method(IntegerClass, 'upto', fun method_upto/2),
   erruby_object:def_method(IntegerClass, 'downto', fun method_downto/2),
+  erruby_object:def_method(IntegerClass, 'abs', fun method_abs/1),
+  erruby_object:def_method(IntegerClass, 'magnitude', fun method_abs/1),
   ok.
 
 method_to_i(#{self := Self}=Env) -> erruby_rb:return(Self, Env).
@@ -110,3 +112,6 @@ method_downto(#{self := Self}=Env, AnotherInteger) ->
   AnotherInt = erruby_fixnum:fix_to_int(AnotherInteger),
   Range = downto_range(Int,AnotherInt),
   yield_in_range(Env,Range).
+
+method_abs(#{self := Self}=Env) ->
+  erruby_fixnum:new_fixnum(Env, abs(erruby_fixnum:fix_to_int(Self))).
