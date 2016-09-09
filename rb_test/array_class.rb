@@ -12,3 +12,9 @@ puts "mul"
 puts ["a","b","c"].at(1)
 puts ["a","b","c"].first
 puts ["a","b","c"].last
+
+array = ["b", "c"]
+array.unshift("a")
+puts array.first
+puts array.shift
+puts array.first
