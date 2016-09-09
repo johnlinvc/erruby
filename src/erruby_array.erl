@@ -73,7 +73,7 @@ at(Array, Index) ->
 
 push(Array, Elem) ->
   Elements = array_to_list(Array),
-  NewElements = [Elem | Elements],
+  NewElements = Elements ++ [Elem],
   Properties = erruby_object:get_properties(Array),
   NewProperties = Properties#{ elements := NewElements} ,
   erruby_object:set_properties(Array, NewProperties).
