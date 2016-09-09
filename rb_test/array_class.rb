@@ -15,3 +15,5 @@ puts ["a","b","c"].last
 ary = ["a","b","c"]
 ary.push "d"
 puts ary.last
+ary << "e" << "f"
+puts ary.last

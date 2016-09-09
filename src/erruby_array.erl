@@ -14,6 +14,7 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, 'first' , fun method_first/1),
   erruby_object:def_method(ArrayClass, 'last' , fun method_last/1),
   erruby_object:def_method(ArrayClass, 'push' , fun method_push/2),
+  erruby_object:def_method(ArrayClass, '<<' , fun method_push/2),
   ok.
 
 method_map(#{self := Self}=Env) ->
