@@ -38,3 +38,9 @@ puts "downto"
 puts (2).downto(-2){|i| puts i.to_s}.to_s
 puts (2).downto(2){|i| puts i.to_s}.to_s
 puts (5).downto(6){|i| puts i.to_s}.to_s
+puts "abs"
+puts (2).abs.to_s
+puts (-2).abs.to_s
+puts "magnitude"
+puts (2).magnitude.to_s
+puts (-2).magnitude.to_s
