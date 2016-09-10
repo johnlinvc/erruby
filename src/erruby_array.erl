@@ -10,6 +10,8 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, map, fun method_map/1),
   erruby_object:def_method(ArrayClass, pmap, fun method_pmap/1),
   erruby_object:def_method(ArrayClass, '*' , fun method_multiplication/2),
+  erruby_object:def_method(ArrayClass, '+', fun method_plus/2),
+  erruby_object:def_method(ArrayClass, 'concat', fun method_concat/2),
   erruby_object:def_method(ArrayClass, 'at' , fun method_at/2),
   erruby_object:def_method(ArrayClass, 'first' , fun method_first/1),
   erruby_object:def_method(ArrayClass, 'last' , fun method_last/1),
@@ -37,6 +39,21 @@ method_multiplication(#{self := Self}=Env, IntObj) ->
   List = array_to_list(Self),
   ResultList = repeat_list(List, Int),
   new_array(Env, ResultList).
+
+method_plus(#{self := Self}=Env, Another) ->
+  Elements = array_to_list(Self),
+  AnotherElements = array_to_list(Another),
+  NewElements = Elements ++ AnotherElements,
+  new_array(Env, NewElements).
+
+method_concat(#{self := Self}=Env, Another) ->
+  Elements = array_to_list(Self),
+  AnotherElements = array_to_list(Another),
+  NewElements = Elements ++ AnotherElements,
+  Properties = erruby_object:get_properties(Self),
+  NewProperties = Properties#{ elements := NewElements},
+  erruby_object:set_properties(Self, NewProperties),
+  erruby_rb:return(Self, Env).
 
 method_pmap(#{self := Self}=Env) ->
   List = array_to_list(Self),
