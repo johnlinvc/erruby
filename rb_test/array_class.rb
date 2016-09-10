@@ -15,3 +15,5 @@ puts ["a","b","c"].last
 
 puts [false].empty?.to_s
 puts [].empty?.to_s
+puts [1, 2, 3].length.to_s
+puts [1, 2, 3].size.to_s
