@@ -17,3 +17,9 @@ puts [false].empty?.to_s
 puts [].empty?.to_s
 puts [1, 2, 3].length.to_s
 puts [1, 2, 3].size.to_s
+ary = ["a","b"]
+ary.concat ["c", "d"]
+puts ary.last
+ary2 = ary + ["e", "f"]
+puts ary2.last
+puts ary.last
