@@ -27,3 +27,8 @@ ary.push "d"
 puts ary.last
 ary << "e" << "f"
 puts ary.last
+array = ["b", "c"]
+array.unshift("a")
+puts array.first
+puts array.shift
+puts array.first
