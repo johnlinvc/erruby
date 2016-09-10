@@ -10,3 +10,5 @@ puts "mul"
 #end
 #puts a
 puts ["a","b","c"].at(1)
+puts ["a","b","c"].first
+puts ["a","b","c"].last
