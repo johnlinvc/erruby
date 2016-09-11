@@ -40,6 +40,9 @@ main(RawArgs) ->
     erruby_debug:debug_2("input args ~s\n", [RubyArgs]),
     eruby(SrcFileName)
   catch
+    _:known_error ->
+      erruby_debug:debug_1("known error ~n", []),
+      erruby_debug:debug_1("~p~n",[erlang:get_stacktrace()]);
     _:E ->
       io:format("error ~p ~n", [E]),
       erlang:display(erlang:get_stacktrace())
