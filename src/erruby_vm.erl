@@ -158,7 +158,7 @@ eval_ast({ast, type, class, children,
   NameEnv = eval_ast(NameAst,Env),
   ClassConst = erruby_rb:ret_val(NameEnv),
   Class = case ClassConst of
-    not_found -> {ok, NewClass} = erruby_class:new_class(),
+    not_found -> {ok, NewClass} = erruby_class:new_named_class(Name),
            erruby_object:def_const(Self, Name, NewClass),
            NewClass;
       _ -> ClassConst
@@ -258,6 +258,13 @@ eval_method(Target,Method, UnresolvedArgs, Env) when is_function(Method) ->
   MethodArgs = [NewFrame | Args],
   ResultFrame = apply(Method, MethodArgs),
   pop_frame(ResultFrame);
+
+eval_method(Target, {not_found, Name}, _, _) ->
+  %TODO raise exception instead
+  TargetClass = erruby_object:get_class(Target),
+  TargetClassName = erruby_class:class_name(TargetClass),
+  io:format("Undefined Method ~s for ~p~n", [Name, TargetClassName]),
+  exit(known_error);
 
 eval_method(Target,#{body := Body, args := ArgNamesAst} = _Method, Args, Env) ->
   NewFrame = new_frame(Env,Target),

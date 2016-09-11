@@ -11,6 +11,7 @@
 -export([init_main_object/0, main_object/0]).
 -export([start_link/2, start_link/1]).
 -export([get_properties/1, set_properties/2]).
+-export([get_class/1]).
 
 init([#{class := Class, properties := Properties}]) ->
   DefaultState = default_state(),
@@ -60,7 +61,11 @@ get_class(Self) ->
 find_instance_method(Self, Name) ->
   %erruby_debug:debug_tmp("finding instance method ~p in ~p",[ Name, Self]),
   Klass = get_class(Self),
-  gen_server:call(Klass, #{type => find_method, name => Name}).
+  Result = gen_server:call(Klass, #{type => find_method, name => Name}),
+  case Result of
+    not_found -> {not_found, Name};
+    _ -> Result
+  end.
 
 find_method(Self, Name) ->
   gen_server:call(Self, #{type => find_method, name => Name}).
