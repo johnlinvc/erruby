@@ -1,0 +1,8 @@
+-module(erruby_file).
+-include("../rb.hrl").
+-export([install_file_classes/0]).
+
+install_file_classes() ->
+  {ok, FileClass} = erruby_class:new_class(),
+  'File' = erruby_object:def_global_const('File', FileClass),
+  ok.
