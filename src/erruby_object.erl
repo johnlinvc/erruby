@@ -60,6 +60,26 @@ get_class(Self) ->
   gen_server:call(Self, #{type => get_class}).
 
 find_instance_method(Self, Name) ->
+  SingletonMethod = find_instance_method_in_singleton_class(Self, Name),
+  case SingletonMethod of
+    {ok, Method} -> Method;
+    {not_found, _} ->
+      find_instance_method_in_class(Self, Name)
+  end.
+
+find_instance_method_in_singleton_class(Self, Name) ->
+  SingletonClass = singleton_class(Self),
+  case SingletonClass of
+    not_found -> {not_found, Name};
+    _ ->
+      Result = gen_server:call(SingletonClass, #{type => find_method, name => Name}),
+      case Result of
+        not_found -> {not_found, Name};
+        _ -> {ok, Result}
+      end
+  end.
+
+find_instance_method_in_class(Self, Name) ->
   %erruby_debug:debug_tmp("finding instance method ~p in ~p",[ Name, Self]),
   Klass = get_class(Self),
   Result = gen_server:call(Klass, #{type => find_method, name => Name}),
@@ -78,12 +98,17 @@ self_or_object_class(Self) ->
     _ -> Self
   end.
 
+
 singleton_class(Self) ->
   Properties = get_properties(Self),
-  SingletonClass = maps:get(singleton_class, Properties, not_found),
+  maps:get(singleton_class, Properties, not_found).
+
+get_or_create_singleton_class(Self) ->
+  SingletonClass = singleton_class(Self),
   case SingletonClass of
     not_found ->
       {ok, NewSingletonClass} = erruby_class:new_named_class("singleton class"),
+      Properties = get_properties(Self),
       NewProperties = Properties#{ singleton_class => NewSingletonClass },
       set_properties(Self, NewProperties),
       NewSingletonClass;
@@ -101,11 +126,11 @@ def_method(Self,Name,Func) when is_function(Func) ->
   gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
 
 def_singleton_method(Self, Name, Args, Body) ->
-  Receiver = singleton_class(Self),
+  Receiver = get_or_create_singleton_class(Self),
   gen_server:call(Receiver, #{type => def_method, name => Name, args => Args, body => Body}).
 
 def_singleton_method(Self,Name,Func) when is_function(Func) ->
-  Receiver = singleton_class(Self),
+  Receiver = get_or_create_singleton_class(Self),
   gen_server:call(Receiver, #{type => def_method, name => Name, func => Func}).
 
 %TODO call def_const instead
@@ -362,3 +387,4 @@ find_method_in_ancestors(Ancestors, Name) ->
     not_found -> find_method_in_ancestors(Rest, Name);
     _ -> Method
   end.
+
