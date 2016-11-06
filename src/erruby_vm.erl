@@ -144,6 +144,15 @@ eval_ast({ast, type, gvar, children, [Name]}, Env) ->
   Val = erruby_object:find_global_var(Name),
   erruby_rb:return(Val, Env);
 
+
+eval_ast({ast, type, defs, children, Children}, Env) ->
+  [ReceiverAst , Name , {ast, type, args, children, Args}, Body] = Children,
+  ReceiverEnv = eval_ast(ReceiverAst, Env),
+  Receiver = erruby_rb:ret_val(ReceiverEnv),
+  erruby_object:def_singleton_method(Receiver, Name, Args, Body),
+  new_symbol(Name, Env);
+
+
 eval_ast({ast, type, def, children, Children}, Env) ->
   [Name | [ {ast, type, args, children, Args} , Body ] ] = Children,
   #{ self := Self } = Env,
