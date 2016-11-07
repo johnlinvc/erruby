@@ -57,6 +57,7 @@ Currently it support some of the basic ruby constructs.
 Supported features:
 
 - `method` definition & calling
+- singleton methods, class methods
 - `class` and inheritance.
 - `block` and `yield`.
 - Constants.
@@ -90,11 +91,15 @@ class Alice < Bar
   def to_s
     "i'm alice"
   end
+  def self.name
+    "Alice"
+  end
 end
 
 puts Foo.new.to_s # "foo"
 puts Bar.new.to_s # "foo"
 puts Alice.new.to_s # "i'm alice"
+puts Alice.name # "Alice"
 ```
 
 ### block
