@@ -32,3 +32,9 @@ array.unshift("a")
 puts array.first
 puts array.shift
 puts array.first
+
+puts [1, 2, 3, 4, 5].drop(1).length.to_s
+puts [1, 2, 3, 4, 5].drop(3).length.to_s
+puts [1, 2, 3, 4, 5].drop(0).length.to_s
+puts [1, 2, 3, 4, 5].drop(5).length.to_s
+puts [1, 2, 3, 4, 5].drop(10).length.to_s
