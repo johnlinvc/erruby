@@ -22,7 +22,24 @@ install_array_classes() ->
   erruby_object:def_method(ArrayClass, '<<' , fun method_push/2),
   erruby_object:def_method(ArrayClass, 'unshift' , fun method_unshift/2),
   erruby_object:def_method(ArrayClass, 'shift' , fun method_shift/1),
+  erruby_object:def_method(ArrayClass, 'drop' , fun method_drop/2),
   ok.
+
+drop_elements(_List, Count) when Count =< 0 ->
+  _List;
+drop_elements([Head | Tail], Count) ->
+  drop_elements(Tail, Count - 1).
+
+method_drop(#{self := Self}=Env, IntObj) ->
+  Int = erruby_fixnum:fix_to_int(IntObj),
+  List = array_to_list(Self),
+  if
+    length(List) < Int ->
+      new_array(Env, []);
+    true ->
+      ResultList = drop_elements(List, Int),
+      new_array(Env, ResultList)
+  end.
 
 method_map(#{self := Self}=Env) ->
   List = array_to_list(Self),
