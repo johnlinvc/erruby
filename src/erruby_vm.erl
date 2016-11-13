@@ -60,6 +60,9 @@ eval_ast({ast, type, array, children, Args}, Env) ->
 eval_ast({ast, type, int, children, [N]}, Env) ->
   erruby_fixnum:new_fixnum(Env, N);
 
+eval_ast({ast, type, '__FILE__', children, []}, #{'FileName' := Filename } = Env) ->
+  new_string(Filename, Env);
+
 eval_ast({ast, type, csend, children, Children}, Env)->
   erruby_debug:debug_1("csend~n",[]),
   [print_ast(Ast) || Ast <- Children],
@@ -359,4 +362,6 @@ init_builtin_class() ->
   ok = erruby_array:install_array_classes(),
   ok = erruby_integer:install_integer_class(),
   ok = erruby_fixnum:install_fixnum_class(),
-  ok = erruby_boolean:install_boolean_classes().
+  ok = erruby_boolean:install_boolean_classes(),
+  ok = erruby_file:install_file_classes(),
+  ok.
