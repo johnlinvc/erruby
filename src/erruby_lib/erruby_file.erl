@@ -8,12 +8,24 @@ install_file_classes() ->
   erruby_object:def_singleton_method(FileClass, 'expand_path', fun method_expand_path/3),
   ok.
 
-%FIXME add impl
 method_expand_path(Env, Filename, RelativeDirOrFileName) ->
-  % impl ref https://github.com/mochi/mochiweb/blob/b7f3693a9008de6d31a67174f7184fe24093a1b4/src/mochiweb_util.erl#L72
   {ok, Cwd} = file:get_cwd(),
   DirOrFileName = filename:absname_join(Cwd, RelativeDirOrFileName),
-  DirName = filename:dirname(DirOrFileName),
-  ExpanedPath = filename:absname_join(DirName, Filename),
-  FlattenedPath = filename:flatten(ExpanedPath),
+  ExpanedPath = filename:absname_join(DirOrFileName, Filename),
+  FlattenedPath = flatten_path(ExpanedPath),
   erruby_vm:new_string(FlattenedPath, Env).
+
+flatten_path(Path)->
+  Components = filename:split(Path),
+  FlattenedComponents = flatten_path_components(Components,[]),
+  filename:join(FlattenedComponents).
+
+flatten_path_components([], Acc) -> lists:reverse(Acc);
+flatten_path_components([".."|T], [])->
+  flatten_path_components(T, []);
+flatten_path_components([".."|T], ["/"])->
+  flatten_path_components(T, ["/"]);
+flatten_path_components([".."|T], [_H|Acc])->
+  flatten_path_components(T, Acc);
+flatten_path_components([H|T], Acc)->
+  flatten_path_components(T, [H|Acc]).
