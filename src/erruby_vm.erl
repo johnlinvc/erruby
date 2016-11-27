@@ -143,7 +143,8 @@ eval_ast({ast, type, gvasgn, children, Children}, Env) ->
   erruby_object:def_global_var(Name, RetVal),
   erruby_rb:return(Name, NewEnv);
 
-eval_ast({ast, type, gvar, children, [Name]}, Env) ->
+eval_ast({ast, type, gvar, children, [NameAtom]}, Env) ->
+  Name = atom_to_list(NameAtom),
   Val = erruby_object:find_global_var(Name),
   erruby_rb:return(Val, Env);
 
@@ -351,10 +352,17 @@ pop_frame(Frame) ->
   erruby_rb:return(RetVal, PrevFrame).
 
 default_env() ->
-  {ok, _ObjectClass} = erruby_object:init_object_class(),
-  {ok, _ClassClass} = erruby_class:init_class_class(),
-  {ok, MainObject} = erruby_object:init_main_object(),
-  init_builtin_class(),
+  CurrentMainObject = erruby_object:main_object(),
+  MainObject = case CurrentMainObject of
+    undefined ->
+      {ok, _ObjectClass} = erruby_object:init_object_class(),
+      {ok, _ClassClass} = erruby_class:init_class_class(),
+      {ok, NewMainObject} = erruby_object:init_main_object(),
+      init_builtin_class(),
+      NewMainObject;
+    _ ->
+      CurrentMainObject
+  end,
   #{self => MainObject, lvars => #{}}.
 
 init_builtin_class() ->

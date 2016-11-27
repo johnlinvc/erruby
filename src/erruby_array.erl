@@ -5,7 +5,7 @@
 
 %TODO find a way to define module_function
 install_array_classes() ->
-  {ok, ArrayClass} = erruby_class:new_class(),
+  {ok, ArrayClass} = erruby_class:new_named_class('Array'),
   'Array' = erruby_object:def_global_const('Array', ArrayClass),
   erruby_object:def_method(ArrayClass, map, fun method_map/1),
   erruby_object:def_method(ArrayClass, pmap, fun method_pmap/1),
