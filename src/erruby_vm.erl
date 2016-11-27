@@ -364,4 +364,5 @@ init_builtin_class() ->
   ok = erruby_fixnum:install_fixnum_class(),
   ok = erruby_boolean:install_boolean_classes(),
   ok = erruby_file:install_file_classes(),
+  ok = erruby_object:init_global_vars(),
   ok.

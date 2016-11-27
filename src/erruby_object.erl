@@ -13,6 +13,7 @@
 -export([start_link/2, start_link/1]).
 -export([get_properties/1, set_properties/2]).
 -export([get_class/1]).
+-export([init_global_vars/0]).
 
 init([#{class := Class, properties := Properties}]) ->
   DefaultState = default_state(),
@@ -331,8 +332,11 @@ init_object_class_internal() ->
   install_object_class_methods(),
   'Object' = def_const(Pid, 'Object', Pid),
   set_properties(object_class(), #{global_var_tbl => #{}}),
-  def_global_var("$LOADED_FEATURES", erruby_array:new_array([])),
   {ok, Pid}.
+
+init_global_vars() ->
+  def_global_var("$LOADED_FEATURES", erruby_array:new_array([])),
+  ok.
 
 init_main_object() ->
   erb:find_or_init_class(erruby_main_object, fun init_main_object_internal/0).
