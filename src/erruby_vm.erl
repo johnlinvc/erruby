@@ -138,9 +138,10 @@ eval_ast({ast, type, ivar, children, [Name]}, #{self := Self}=Env) ->
 
 eval_ast({ast, type, gvasgn, children, Children}, Env) ->
   [Name, ValAst] = Children,
+  NameList = atom_to_list(Name),
   NewEnv = eval_ast(ValAst, Env),
   RetVal = erruby_rb:ret_val(NewEnv),
-  erruby_object:def_global_var(Name, RetVal),
+  erruby_object:def_global_var(NameList, RetVal),
   erruby_rb:return(Name, NewEnv);
 
 eval_ast({ast, type, gvar, children, [NameAtom]}, Env) ->
