@@ -336,7 +336,9 @@ init_object_class_internal() ->
   {ok, Pid}.
 
 init_global_vars() ->
-  def_global_var("$LOADED_FEATURES", erruby_array:new_array([])),
+  LoadedFeatures = erruby_array:new_array([]),
+  def_global_var("$LOADED_FEATURES", LoadedFeatures),
+  def_global_var("$\"", LoadedFeatures),
   ok.
 
 init_main_object() ->
