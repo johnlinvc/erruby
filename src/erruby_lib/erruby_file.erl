@@ -1,6 +1,6 @@
 -module(erruby_file).
 -include("../rb.hrl").
--export([install_file_classes/0]).
+-export([install_file_classes/0, expand_path/2]).
 
 install_file_classes() ->
   {ok, FileClass} = erruby_class:new_class(),
@@ -8,11 +8,14 @@ install_file_classes() ->
   erruby_object:def_singleton_method(FileClass, 'expand_path', fun method_expand_path/3),
   ok.
 
-method_expand_path(Env, Filename, RelativeDirOrFileName) ->
+expand_path(Filename, RelativeDirOrFileName) ->
   {ok, Cwd} = file:get_cwd(),
   DirOrFileName = filename:absname_join(Cwd, RelativeDirOrFileName),
   ExpanedPath = filename:absname_join(DirOrFileName, Filename),
-  FlattenedPath = flatten_path(ExpanedPath),
+  flatten_path(ExpanedPath).
+
+method_expand_path(Env, Filename, RelativeDirOrFileName) ->
+  FlattenedPath = expand_path(Filename, RelativeDirOrFileName),
   erruby_vm:new_string(FlattenedPath, Env).
 
 flatten_path(Path)->
