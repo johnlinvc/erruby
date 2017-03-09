@@ -275,12 +275,13 @@ method_require_relative(Env, FileName) ->
   RelativeFileNameWithExt = append_rb_extension(RelativeFileName),
   LoadedFeatures = find_global_var("$LOADED_FEATURES"),
   LoadedFeaturesList = erruby_array:array_to_list(LoadedFeatures),
-  Contains = lists:member( RelativeFileNameWithExt, LoadedFeaturesList),
+  AbsoluteFileNameWithExt = erruby_file:expand_path(RelativeFileNameWithExt, "./"),
+  Contains = lists:member( AbsoluteFileNameWithExt, LoadedFeaturesList),
   case Contains of
     true -> erruby_boolean:new_false(Env);
     _ ->
       load_file(Env, RelativeFileNameWithExt),
-      erruby_array:push(LoadedFeatures, RelativeFileNameWithExt),
+      erruby_array:push(LoadedFeatures, AbsoluteFileNameWithExt),
       erruby_boolean:new_true(Env)
   end.
 
