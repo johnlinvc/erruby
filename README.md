@@ -22,7 +22,7 @@ To install erlang & rebar on OS X, using homebrew
 
 ### Building
 
-After getting the source of ErRuby, you have to get the gems for parser to work with bundler using:
+After getting the source of ErRuby, get the gems for parser with bundler using:
 	
 	bundle install
 	
@@ -56,25 +56,25 @@ Currently it support some of the basic ruby constructs.
 
 Supported features:
 
-- `method` definition & calling
-- singleton methods, class methods
+- `method` definition & calling.
+- singleton methods, class methods.
 - `class` and inheritance.
 - `block` and `yield`.
 - Constants.
 - Local variables.
 - Instance variables.
-- `load` & `require_relative`
-- `Boolean` & `Integer` with basic mehtods.
+- `load` & `require_relative`.
+- `Boolean` & `Integer` with basic methods.
 - `String` literal.
 - `Array` literal.
 
 Unsupported core features
 
 - class initializer, class instance variables.
-- `module` definition, `include`, `extend`
-- variadic argument in function
-- keyword argument in function
-- GC
+- `module` definition, `include`, `extend`.
+- variadic argument in function.
+- keyword argument in function.
+- GC.
 
 ### Class & inherentance
 ```ruby
